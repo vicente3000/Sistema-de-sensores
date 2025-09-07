@@ -131,18 +131,24 @@ Así los datos **no se pierden** al reiniciar los contenedores.
 ```mermaid
 flowchart LR
   subgraph Frontend [React + Vite + Recharts]
-    UI[UI] -- Socket.IO --> APIWS[API (Socket.IO)]
-    UI -- REST --> API[API (Express)]
+    UI[UI]
+    APIWS[API (Socket.IO)]
+    API[API (Express)]
+    UI -- Socket.IO --> APIWS
+    UI -- REST --> API
   end
 
   SIM[Simulador Python] -- HTTP/WS --> API
 
-  API -- Config/Alertas (CRUD/log) --> MONGO[(MongoDB)]
-  API -- Lecturas históricas (write/read) --> CASS[(Cassandra)]
+  MONGO[(MongoDB)]
+  CASS[(Cassandra)]
+
+  API -- "Config/Alertas (CRUD/log)" --> MONGO
+  API -- "Lecturas históricas (write/read)" --> CASS
 
   %% Detalle lógico:
-  SIM -. envía lecturas .-> API
-  API -. valida, inserta en Cassandra, evalúa umbrales .-> CASS
-  API -. registra alerta y emite tiempo real .-> MONGO
-  APIWS -. alerts:new --> UI
+  SIM -. "envía lecturas" .-> API
+  API -. "valida, inserta en Cassandra, evalúa umbrales" .-> CASS
+  API -. "registra alerta y emite tiempo real" .-> MONGO
+  APIWS -. "alerts:new" .-> UI
 
