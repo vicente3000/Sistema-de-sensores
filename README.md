@@ -1,72 +1,92 @@
-# 🌱 GreenData
+# 🌱 GreenData — README
 
-**GreenData** es una plataforma web para el monitoreo de hasta 100 plantas mediante sensores de **humedad, pH, temperatura y luminosidad**.  
-El sistema permite registrar lecturas en tiempo real, generar **alertas en tres niveles** (normal, grave, crítica), gestionar plantas/sensores/umbrales y consultar históricos con visualizaciones interactivas.
+## 0) Premisa del taller
+Desarrollaremos una **plataforma web** para monitorear hasta **100 plantas** con sensores de **humedad, pH, temperatura y luminosidad**.  
+El sistema **recibe lecturas en tiempo real**, **genera alertas** (normal, grave, crítica), permite **gestionar plantas/sensores/umbrales** y **visualizar históricos** con gráficos.  
+Exigencias académicas: **separación front/back/datos** y uso de **al menos dos bases de datos NoSQL** de distinta categoría.
 
 ---
 
-## 🚀 Tecnologías utilizadas
-
-### Back-end
-- **Node.js + Express** → API REST para configuración y consultas.
-- **Socket.IO** → comunicación en tiempo real (alertas y lecturas).
-- **JavaScript + TypeScript** → escritura tipada y mantenible del backend.
-
-### Bases de datos NoSQL
-- **MongoDB (documental)** →  
-  - Configuración de plantas, sensores y umbrales.  
-  - Registro de alertas y bitácora de eventos.
-- **Apache Cassandra (wide-column)** →  
-  - Almacenamiento de lecturas de sensores en grandes volúmenes.  
-  - Consultas históricas rápidas por planta, sensor y rango de fechas.
+## 1) Tecnologías que vamos a ocupar
 
 ### Front-end
-- **React + Vite** → interfaz modular, rápida y moderna.  
-- **Recharts** → gráficos interactivos y filtrables para lecturas históricas y alertas.
+- **React + Vite** — construcción de la interfaz rápida y modular.
+- **Recharts** — gráficos interactivos para históricos.
+- **Socket.IO (cliente)** — alertas y últimos valores en tiempo real.
 
-### Otros
-- **Docker Compose** → despliegue unificado de front, back y bases de datos.  
-- **Python (scripts/simulador)** → generación de datos de sensores y pruebas de carga.
+### Back-end
+- **Node.js + Express** — API REST para CRUD y consultas.
+- **Socket.IO (servidor)** — canal de tiempo real hacia el front.
+- **JavaScript con TypeScript** — tipado estático para mayor mantenibilidad y seguridad.
 
----
+### Bases de datos NoSQL
+- **MongoDB (documental)** — configuración (plantas, sensores, umbrales) y **bitácora/alertas**.
+- **Apache Cassandra (wide-column)** — **telemetría** de lecturas, optimizada para consultas por **tiempo** y **alto volumen**.
 
-## 📡 Arquitectura y comunicación
-
-La arquitectura sigue el patrón **CQRS + Event-Driven**:
-
-1. **Ingestor**  
-   - Recibe datos de sensores o del simulador.  
-   - Publica eventos de lectura en una **cola de mensajería** (RabbitMQ/Kafka).
-
-2. **Processor**  
-   - Consume eventos desde la cola.  
-   - Persiste lecturas en **Cassandra**.  
-   - Evalúa umbrales y genera alertas.  
-   - Envía alertas al **API/Config** para almacenarlas en **MongoDB** y difundirlas en tiempo real.
-
-3. **API/Config**  
-   - Expone endpoints REST para CRUD de plantas, sensores y umbrales.  
-   - Gestiona la bitácora de alertas en MongoDB.  
-   - Publica notificaciones por **Socket.IO** hacia el front-end.  
-
-4. **Front-end (React)**  
-   - Consume endpoints REST para históricos y configuraciones.  
-   - Escucha notificaciones en tiempo real vía Socket.IO (alertas y nuevas lecturas).  
+### Soporte y entorno
+- **Docker Compose** — orquestación local (API, front, MongoDB, Cassandra).
+- **Python (scripts/simulador)** — generación de lecturas y pruebas de carga (p. ej., lotes de 10.000).
 
 ---
 
-## 🔗 Flujo de datos
+## 2) ¿Cómo se comunica cada tecnología y qué función cumple?
 
-```mermaid
-flowchart LR
-  subgraph Frontend [React + Vite + Recharts]
-    UI[UI] -- Socket.IO --> APIWS[API/Config WS]
-    UI -- REST --> API[API/Config REST]
-  end
+- **React (UI) ⇄ Express (API REST)**  
+  - La UI realiza **CRUD** de plantas/sensores/umbrales y pide **históricos** (filtros: planta, sensor, rango de fechas).
+- **React (UI) ⇄ Socket.IO (API)**  
+  - La UI **escucha** eventos `alerts:new` (notificaciones), y opcionalmente `readings:new` (últimos valores para “cards”).
+- **Express ⇄ MongoDB**  
+  - **Config** y **alertas**: colecciones `plants`, `sensors`, `thresholds`, `alerts`.  
+  - Índices para consultas rápidas: `sensors(plantId)`, `alerts(plantId, ts)`.
+- **Express ⇄ Cassandra**  
+  - **Lecturas**: tabla `readings` particionada por `(plant_id, sensor_type, ymd)` con clustering por `ts DESC`, soporta rangos temporales eficientes.
+- **Simulador Python ⇄ Express**  
+  - Envía lecturas (unitarias o en lote). La API valida, **inserta en Cassandra**, evalúa umbrales y **emite alertas** por Socket.IO.
 
-  SENS[Sensores/Simulador] -- HTTP/WS --> ING[Ingestor]
-  ING -- Evento Lectura --> MQ[(Cola/Stream)]
-  MQ --> PROC[Processor]
-  PROC -- Escrituras batch --> CAS[(Cassandra)]
-  PROC -- Alerta --> API
-  API -- Config/Bitácora --> MONGO[(MongoDB)]
+**Resumen de roles**
+- **React**: experiencia de usuario (panel, formularios, gráficos).
+- **Express (Node+TS)**: capa de negocio (ingesta, reglas de alerta, endpoints).
+- **MongoDB**: verdad de **configuración** y **registro** de alertas.
+- **Cassandra**: **histórico** masivo de lecturas temporalmente consultable.
+- **Socket.IO**: tiempo real para una UX reactiva.
+- **Docker Compose**: levantar todo con un comando.
+- **Python**: simular cargas para pruebas/demos.
+
+---
+
+## 3) Arquitectura usada y por qué
+
+### Arquitectura  (2 servicios + 2 NoSQL)
+- **Front-end (React + Vite)**: UI de gestión y visualización.
+- **API única (Node.js + Express + Socket.IO, TypeScript)**:  
+  - **Ingesta** de lecturas (lote/individual).  
+  - **Cálculo de alertas** con histéresis simple (evita “parpadeo”).  
+  - **CRUD** de plantas/sensores/umbrales (MongoDB).  
+  - **Consultas históricas** a Cassandra con downsampling si hay muchos puntos.  
+  - **Emisión** de alertas en tiempo real por Socket.IO.
+
+**¿Por qué esta arquitectura?**
+- **Curva de aprendizaje suave** : pocas piezas, responsabilidades claras.
+- **Cumple el ramo**: separación front/back/datos y 2 NoSQL de categorías distintas.
+
+---
+
+## 4) Modelos de datos (mínimos)
+
+**MongoDB (documental)**
+- `plants { _id, name, location, createdAt, status }`
+- `sensors { _id, plantId, type: 'humidity'|'ph'|'temp'|'lux', intervalSec, enabled, meta }`
+- `thresholds { _id, sensorId, min, max, hysteresis }`
+- `alerts { _id, plantId, sensorId, level: 'normal'|'grave'|'critica', ts, value, message }`
+
+**Cassandra (wide-column)**
+```sql
+CREATE TABLE readings (
+  plant_id uuid,
+  sensor_type text,   -- 'humidity'|'ph'|'temp'|'lux'
+  ymd date,           -- partición por día
+  ts timestamp,       -- clustering
+  sensor_id uuid,
+  value double,
+  PRIMARY KEY ((plant_id, sensor_type, ymd), ts, sensor_id)
+) WITH CLUSTERING ORDER BY (ts DESC);
