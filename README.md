@@ -150,4 +150,60 @@ flowchart LR
   API -. inserta en Cassandra y evalua umbrales .-> CASS
   API -. registra alerta y emite tiempo real .-> MONGO
   APIWS -. alerta en vivo .-> UI
+```
+
+## 7) Estructura de carpetas del proyecto
+
+La organización del repositorio sigue la arquitectura en capas (front, back y datos), junto con scripts de soporte.  
+Cada carpeta contiene su propio `package.json` (frontend y backend) para mantener dependencias aisladas.
+
+## 📂 Estructura del proyecto
+
+La organización del repositorio **GreenData** sigue la arquitectura en capas (front-end, back-end y almacenamiento), más un simulador para pruebas.
+
+```bash
+greendata/
+├─ api/                        # Back-end (Node.js + Express + Socket.IO, TypeScript)
+│  ├─ src/
+│  │  ├─ routes/               # Endpoints REST (plants, sensors, thresholds, readings, alerts)
+│  │  ├─ models/               # Modelos de MongoDB (Mongoose)
+│  │  ├─ services/             # Lógica de negocio (ingesta, alertas, consultas Cassandra)
+│  │  ├─ db/                   # Conexión a MongoDB y Cassandra
+│  │  ├─ utils/                # Funciones auxiliares (validaciones, downsampling, etc.)
+│  │  └─ index.ts              # Punto de entrada del servidor (Express + Socket.IO)
+│  ├─ tests/                   # Tests unitarios y de integración
+│  └─ package.json
+│
+├─ frontend/                   # Front-end (React + Vite + Recharts)
+│  ├─ src/
+│  │  ├─ components/           # Componentes reutilizables (cards, gráficos, formularios)
+│  │  ├─ pages/                # Vistas principales (Dashboard, Plants, Sensors, Alerts)
+│  │  ├─ services/             # Cliente API REST + Socket.IO
+│  │  └─ App.tsx               # Punto de entrada de la app
+│  ├─ public/                  # Archivos estáticos
+│  └─ package.json
+│
+├─ simulator/                  # Scripts en Python para simular sensores
+│  └─ send_batch.py
+│
+├─ docker-compose.yml           # Orquestación de contenedores (api, frontend, mongo, cassandra)
+├─ README.md
+└─ .env                         # Variables de entorno compartidas
+```
+
+**Notas importantes:**
+- **api/db** → contiene los drivers y configuraciones de conexión a **MongoDB** y **Cassandra**.  
+- **api/services** → implementa la lógica de CQRS:  
+  - MongoDB → configuración y alertas.  
+  - Cassandra → lecturas históricas.  
+- **frontend/services** → centraliza llamadas a la API REST y manejo de sockets en React.  
+- **simulator** → útil para pruebas de carga y demostraciones académicas.  
+- **docker-compose.yml** → permite levantar todo el entorno con un solo comando.  
+
+---
+
+👉 Con esta estructura el equipo (2 novatos + tú experto) puede trabajar en paralelo:  
+- **Novato A**: `frontend/` (UI, gráficos, CRUD).  
+- **Novato B**: `api/routes` + `api/models` (endpoints CRUD, Mongoose).  
+- **Tú**: `api/services` + `api/db` (Cassandra, ingesta masiva, lógica de alertas, Docker).  
 
