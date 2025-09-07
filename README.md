@@ -201,9 +201,3 @@ greendata/
 - **docker-compose.yml** → permite levantar todo el entorno con un solo comando.  
 
 ---
-
-👉 Con esta estructura el equipo (2 novatos + tú experto) puede trabajar en paralelo:  
-- **Novato A**: `frontend/` (UI, gráficos, CRUD).  
-- **Novato B**: `api/routes` + `api/models` (endpoints CRUD, Mongoose).  
-- **Tú**: `api/services` + `api/db` (Cassandra, ingesta masiva, lógica de alertas, Docker).  
-
