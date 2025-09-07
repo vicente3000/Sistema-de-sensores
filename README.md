@@ -71,6 +71,23 @@ Exigencias académicas: **separación front/back/datos** y uso de **al menos dos
 
 ---
 
+flowchart LR
+  subgraph Frontend [React + Vite + Recharts]
+    UI[UI] -- Socket.IO --> APIWS[API (Socket.IO)]
+    UI -- REST --> API[API (Express)]
+  end
+
+  SIM[Simulador Python] -- HTTP/WS --> API
+
+  API -- Config/Alertas (CRUD/log) --> MONGO[(MongoDB)]
+  API -- Lecturas históricas (write/read) --> CASS[(Cassandra)]
+
+  %% Detalle lógico:
+  SIM -. envía lecturas .-> API
+  API -. valida, inserta en Cassandra, evalúa umbrales .-> CASS
+  API -. registra alerta y emite tiempo real .-> MONGO
+  APIWS -. alerts:new --> UI
+
 ## 4) Modelos de datos (mínimos)
 
 **MongoDB (documental)**
