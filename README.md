@@ -91,8 +91,7 @@ CREATE TABLE readings (
   value double,
   PRIMARY KEY ((plant_id, sensor_type, ymd), ts, sensor_id)
 ) WITH CLUSTERING ORDER BY (ts DESC);
-
-
+```
 5) Docker: qué es, cómo funciona aquí y para qué sirve
 
 ¿Qué es?
