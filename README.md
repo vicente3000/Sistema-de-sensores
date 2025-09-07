@@ -88,6 +88,7 @@ flowchart LR
   API -. registra alerta y emite tiempo real .-> MONGO
   APIWS -. alerts:new --> UI
 
+
 ## 4) Modelos de datos (mínimos)
 
 **MongoDB (documental)**
