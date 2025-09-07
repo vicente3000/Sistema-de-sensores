@@ -92,42 +92,57 @@ CREATE TABLE readings (
   PRIMARY KEY ((plant_id, sensor_type, ymd), ts, sensor_id)
 ) WITH CLUSTERING ORDER BY (ts DESC);
 ```
-5) Docker: qué es, cómo funciona aquí y para qué sirve
+## 5) Docker: qué es, cómo funciona aquí y para qué sirve
 
-¿Qué es?
-Docker empaqueta tu app y sus dependencias en una imagen. Al ejecutar una imagen, obtienes un container (proceso aislado y reproducible).
+**¿Qué es?**  
+Docker empaqueta tu aplicación y sus dependencias en una **imagen**.  
+Al ejecutar una imagen, obtienes un **container**, un proceso aislado y reproducible.
 
-¿Cómo funciona aquí?
-Usamos Docker Compose para definir y levantar todos los servicios juntos:
+**¿Cómo funciona aquí?**  
+Usamos **Docker Compose** para definir y levantar todos los servicios juntos:
 
-frontend → contenedor con React/Vite sirviendo la UI.
+- `frontend` → contenedor con React/Vite sirviendo la UI.  
+- `api` → contenedor con Express/Socket.IO (Node + TypeScript).  
+- `mongo` → contenedor con MongoDB.  
+- `cassandra` → contenedor con Apache Cassandra.  
 
-api → contenedor con Express/Socket.IO (Node + TypeScript).
+Compose crea una **red interna** donde los servicios se resuelven por **nombre** (DNS interno).  
 
-mongo → contenedor con MongoDB.
+Ejemplos de conexión desde la API:  
+- `MONGO_URI=mongodb://mongo:27017/greendata`  
+- `CASSANDRA_CONTACT_POINTS=cassandra`  
 
-cassandra → contenedor con Apache Cassandra.
+Además define **volúmenes persistentes**:  
+- `mongo_data:/data/db`  
+- `cassandra_data:/var/lib/cassandra`  
 
-Compose crea una red interna donde los servicios se resuelven por nombre (DNS interno).
-Ejemplos de conexiones desde la API:
+Así los datos **no se pierden** al reiniciar los contenedores.
 
-MONGO_URI=mongodb://mongo:27017/greendata
+**¿Para qué sirve en este proyecto?**  
+- **Reproducibilidad**: todos corren con las mismas versiones.  
+- **Aislamiento**: evita conflictos con dependencias locales.  
+- **Simplicidad**: un solo comando levanta front, back y BDs.  
+- **Portabilidad**: la app funciona en cualquier máquina con Docker.  
 
-CASSANDRA_CONTACT_POINTS=cassandra (puerto 9042)
+---
 
-Además define volúmenes persistentes:
+## 6) Flujo de datos (diagrama)
 
-mongo_data:/data/db
+```mermaid
+flowchart LR
+  subgraph Frontend [React + Vite + Recharts]
+    UI[UI] -- Socket.IO --> APIWS[API (Socket.IO)]
+    UI -- REST --> API[API (Express)]
+  end
 
-cassandra_data:/var/lib/cassandra
-para que los datos no se pierdan al reiniciar contenedores.
+  SIM[Simulador Python] -- HTTP/WS --> API
 
-¿Para qué sirve en este proyecto?
+  API -- Config/Alertas (CRUD/log) --> MONGO[(MongoDB)]
+  API -- Lecturas históricas (write/read) --> CASS[(Cassandra)]
 
-Reproducibilidad: todos corren con las mismas versiones y configuración.
+  %% Detalle lógico:
+  SIM -. envía lecturas .-> API
+  API -. valida, inserta en Cassandra, evalúa umbrales .-> CASS
+  API -. registra alerta y emite tiempo real .-> MONGO
+  APIWS -. alerts:new --> UI
 
-Aislamiento: evitar conflictos de dependencias locales.
-
-Simplicidad: un solo comando levanta front, back y BDs.
-
-Portabilidad: puedes presentar en cualquier máquina con Docker.
