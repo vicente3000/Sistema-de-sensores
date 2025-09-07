@@ -54,7 +54,7 @@ Exigencias académicas: **separación front/back/datos** y uso de **al menos dos
 
 ---
 
-## 3) Arquitectura usada y por qué
+## 3) Arquitectura en capas
 
 ### Arquitectura  (2 servicios + 2 NoSQL)
 - **Front-end (React + Vite)**: UI de gestión y visualización.
