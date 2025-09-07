@@ -132,9 +132,9 @@ Así los datos **no se pierden** al reiniciar los contenedores.
 flowchart LR
   subgraph Frontend [React + Vite + Recharts]
     UI[UI]
-    APIWS[API (Socket.IO)]
-    API[API (Express)]
-    UI -- Socket.IO --> APIWS
+    APIWS[API SocketIO]
+    API[API Express]
+    UI -- SocketIO --> APIWS
     UI -- REST --> API
   end
 
@@ -143,12 +143,11 @@ flowchart LR
   MONGO[(MongoDB)]
   CASS[(Cassandra)]
 
-  API -- "Config/Alertas (CRUD/log)" --> MONGO
-  API -- "Lecturas históricas (write/read)" --> CASS
+  API -- Config y Alertas --> MONGO
+  API -- Lecturas historicas --> CASS
 
-  %% Detalle lógico:
-  SIM -. "envía lecturas" .-> API
-  API -. "valida, inserta en Cassandra, evalúa umbrales" .-> CASS
-  API -. "registra alerta y emite tiempo real" .-> MONGO
-  APIWS -. "alerts:new" .-> UI
+  SIM -. envia lecturas .-> API
+  API -. inserta en Cassandra y evalua umbrales .-> CASS
+  API -. registra alerta y emite tiempo real .-> MONGO
+  APIWS -. alerta en vivo .-> UI
 
