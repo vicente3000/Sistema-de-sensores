@@ -194,10 +194,10 @@ greendata/
 **Notas importantes:**
 - **api/db** → contiene los drivers y configuraciones de conexión a **MongoDB** y **Cassandra**.  
 - **api/services** → implementa la lógica de CQRS:  
-  - MongoDB → configuración y alertas.  
+  - MongoDB → configuración y alertas.
   - Cassandra → lecturas históricas.  
 - **frontend/services** → centraliza llamadas a la API REST y manejo de sockets en React.  
 - **simulator** → útil para pruebas de carga y demostraciones académicas.  
-- **docker-compose.yml** → permite levantar todo el entorno con un solo comando.  
+- **docker-compose.yml** → permite levantar todo el entorno con un solo comando.
 
 ---
