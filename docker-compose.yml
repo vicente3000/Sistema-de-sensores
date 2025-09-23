@@ -1,0 +1,97 @@
+version: "3.9"
+
+name: greendata
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: greendata-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: greendata-cassandra
+    restart: unless-stopped
+    ports:
+      - "9042:9042"
+      - "7000:7000"
+      - "7001:7001"
+    environment:
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=128M
+      - CASSANDRA_CLUSTER_NAME=GreenDataCluster
+      - CASSANDRA_START_RPC=true
+      - CASSANDRA_NUM_TOKENS=128
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE CLUSTER' 127.0.0.1 9042"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+  cassandra-init:
+    image: cassandra:4.1
+    container_name: greendata-cassandra-init
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./cassandra/init.cql:/init.cql:ro
+    entrypoint: ["/bin/sh","-c","cqlsh cassandra 9042 -f /init.cql && echo 'Cassandra keyspace/tables creados'"]
+    restart: "no"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: greendata-api
+    depends_on:
+      mongo:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
+    env_file:
+      - ./.env
+    environment:
+      - PORT=3000
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/greendata}
+      - CASSANDRA_CONTACT_POINTS=${CASSANDRA_CONTACT_POINTS:-cassandra}
+      - CASSANDRA_KEYSPACE=${CASSANDRA_KEYSPACE:-greendata}
+      - SOCKET_IO_CORS_ORIGIN=${SOCKET_IO_CORS_ORIGIN:-*}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: greendata-frontend
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3000}
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL:-http://localhost:3000}
+    ports:
+      - "5173:5173"
+    command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  cassandra_data:
