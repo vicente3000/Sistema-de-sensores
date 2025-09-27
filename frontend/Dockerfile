@@ -2,9 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-ENV NODE_ENV=development \
-    VITE_API_BASE_URL="" \
-    VITE_SOCKET_URL=""
+ENV NODE_ENV=development
 
 COPY package*.json ./
 
