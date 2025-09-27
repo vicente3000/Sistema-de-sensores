@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Alerts from "./pages/Alerts";
 import SensorData from "./pages/SensorData";
 import AddPlant from "./pages/AddPlant";
+import Plants from "./pages/Plants";
 
 export default function App() {
     return (
@@ -15,6 +16,7 @@ export default function App() {
                     <Route path="/alertas" element={<Alerts />} />
                     <Route path="/sensores" element={<SensorData />} />
                     <Route path="/agregar-planta" element={<AddPlant />} />
+                    <Route path="/plantas" element={<Plants />} />
                 </Routes>
             </main>
         </>

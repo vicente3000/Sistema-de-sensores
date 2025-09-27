@@ -8,6 +8,7 @@ export default function NavBar() {
                 <NavLink to="/alertas">Alertas</NavLink>
                 <NavLink to="/sensores">Datos de sensores</NavLink>
                 <NavLink to="/agregar-planta">Agregar planta</NavLink>
+                <NavLink to={"/plantas"}>Plantas</NavLink>
             </nav>
         </header>
     );
