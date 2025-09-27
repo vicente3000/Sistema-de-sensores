@@ -4,7 +4,6 @@ import "../css/Alerts.css";
 
 type SensorType = "humidity" | "ph" | "temp" | "lux";
 
-// Estructura esperada desde el backend (ajústala si difiere)
 type IncomingAlert = {
     id?: string;
     plantId: string;
@@ -57,10 +56,9 @@ export default function Alerts() {
         const onConnect = () => setConnected(true);
         const onDisconnect = () => setConnected(false);
 
-        // Evento que emitirá tu backend, ej.: "alerts:new"
         const onIncoming = (msg: IncomingAlert) => {
             const level = computeLevel(msg.value, msg.threshold);
-            if (!level) return; // ignorar si no cruza/igual al umbral
+            if (!level) return;
 
             const ui: UiAlert = {
                 id: msg.id || crypto.randomUUID(),
@@ -77,7 +75,6 @@ export default function Alerts() {
             setAlerts((prev) => {
                 const next = [ui, ...prev];
                 return next.length > limit ? next.slice(0, limit) : next;
-                // Mostramos primero las más recientes
             });
         };
 

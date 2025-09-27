@@ -26,7 +26,10 @@ type Plant = {
 };
 
 export default function Plants() {
-    // 🔹 DATA DEMO (reemplaza con fetch a tu API más adelante)
+
+
+
+    //demo
     const initial: Plant[] = useMemo(
         () => [
             {
