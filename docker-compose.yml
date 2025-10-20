@@ -49,9 +49,25 @@ services:
       cassandra:
         condition: service_healthy
     volumes:
-      - ./cassandra/init.cql:/init.cql:ro
-    entrypoint: ["/bin/sh","-c","cqlsh cassandra 9042 -f /init.cql && echo 'Cassandra keyspace/tables creados'"]
+      - ./cassandra:/cql:ro
+    entrypoint: ["/bin/sh","-lc", "\
+      set -e; \
+      echo 'Esperando CQL...'; \
+      for i in $(seq 1 60); do \
+        if cqlsh cassandra 9042 -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1; then \
+          echo 'CQL OK'; break; \
+        fi; \
+        echo \"Intento $i: aún no hay CQL...\"; sleep 2; \
+        if [ $i -eq 60 ]; then echo 'Timeout esperando CQL'; exit 1; fi; \
+      done; \
+      # normaliza CRLF→LF por si editaste en Windows
+      tr -d '\\r' < /cql/init.cql > /init_fixed.cql; \
+      echo 'Aplicando /init_fixed.cql...'; \
+      cqlsh cassandra 9042 -f /init_fixed.cql; \
+      echo 'Cassandra keyspace/tables creados'; \
+    "]
     restart: "no"
+
 
   api:
     build:
@@ -85,8 +101,8 @@ services:
       api:
         condition: service_started
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3000}
-      - VITE_SOCKET_URL=${VITE_SOCKET_URL:-http://localhost:3000}
+      - VITE_SOCKET_URL=http://localhost:4000
+      - VITE_API_BASE_URL=http://localhost:3000
     ports:
       - "5173:5173"
     command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
