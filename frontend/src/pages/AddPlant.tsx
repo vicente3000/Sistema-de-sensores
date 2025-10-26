@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import "../css/AddPlant.css";
 
-// ahora el tipo de planta es texto libre
 type PlantType = string;
 type SensorType = "humidity" | "ph" | "temp" | "lux";
 type ScheduleMode = "predefinida" | "horario" | "rango";
