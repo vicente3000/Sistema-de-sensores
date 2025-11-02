@@ -1,5 +1,3 @@
-version: "3.9"
-
 name: greendata
 
 services:
@@ -49,23 +47,26 @@ services:
       cassandra:
         condition: service_healthy
     volumes:
-      - ./cassandra:/cql:ro
-    entrypoint: ["/bin/sh","-lc", "\
-      set -e; \
-      echo 'Esperando CQL...'; \
-      for i in $(seq 1 60); do \
-        if cqlsh cassandra 9042 -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1; then \
-          echo 'CQL OK'; break; \
-        fi; \
-        echo \"Intento $i: aún no hay CQL...\"; sleep 2; \
-        if [ $i -eq 60 ]; then echo 'Timeout esperando CQL'; exit 1; fi; \
-      done; \
-      # normaliza CRLF→LF por si editaste en Windows
-      tr -d '\\r' < /cql/init.cql > /init_fixed.cql; \
-      echo 'Aplicando /init_fixed.cql...'; \
-      cqlsh cassandra 9042 -f /init_fixed.cql; \
-      echo 'Cassandra keyspace/tables creados'; \
-    "]
+      - ./api/src/database/cassandra:/cql:ro
+    entrypoint: 
+      - /bin/sh
+      - -lc
+      - |
+        set -e
+        echo 'Esperando CQL...'
+        for i in $(seq 1 60); do
+          if cqlsh cassandra 9042 -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1; then
+            echo 'CQL OK'; break
+          fi
+          echo "Intento $i: aún no hay CQL..."
+          sleep 2
+          if [ $i -eq 60 ]; then echo 'Timeout esperando CQL'; exit 1; fi
+        done
+        # normaliza CRLF→LF por si editaste en Windows
+        tr -d '\r' < /cql/init.cql > /init_fixed.cql
+        echo 'Aplicando /init_fixed.cql...'
+        cqlsh cassandra 9042 -f /init_fixed.cql
+        echo 'Cassandra keyspace/tables creados'
     restart: "no"
 
 
