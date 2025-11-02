@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { connectMongo } from "./database/mongoDB/config.js";
 import { initCassandra } from "./database/cassandra/config.js";
-import plantRoute from "./routes/plantRoute";
+import plantRoute from "./routes/plantRoute.js";
 
 // Cargar variables de entorno (.env)
 dotenv.config();

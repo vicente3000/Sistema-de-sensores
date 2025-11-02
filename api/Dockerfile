@@ -37,6 +37,7 @@ FROM node:20-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build     /app/dist         ./dist
+COPY ./src/database/cassandra/init.cql /app/dist/database/cassandra/init.cql
 COPY --from=deps-prod /app/node_modules ./node_modules
 COPY package.json ./
 EXPOSE 3000
