@@ -1,4 +1,4 @@
--- api/src/database/cassandra/init.cql
+
 CREATE KEYSPACE IF NOT EXISTS greendata
 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
@@ -10,10 +10,11 @@ CREATE TABLE IF NOT EXISTS greendata.planta (
 );
 
 CREATE TABLE IF NOT EXISTS greendata.sensor (
-    id TEXT PRIMARY KEY,
     idPlanta TEXT,
+    id TEXT,
     tipo TEXT,
-    intervalo INT
+    intervalo INT,
+    PRIMARY KEY (idPlanta, id)
 );
 
 CREATE TABLE IF NOT EXISTS greendata.lectura (
@@ -26,13 +27,13 @@ CREATE TABLE IF NOT EXISTS greendata.lectura (
 ) WITH CLUSTERING ORDER BY (fecha DESC);
 
 CREATE TABLE IF NOT EXISTS greendata.accion (
-    id TEXT PRIMARY KEY,
     idPlanta TEXT,
+    id TEXT,
     tipo TEXT,
     fecha TIMESTAMP,
-    estado TEXT
+    estado TEXT,
+    PRIMARY KEY (idPlanta, id)
 );
 
-CREATE INDEX IF NOT EXISTS ON greendata.sensor (idPlanta);
 CREATE INDEX IF NOT EXISTS ON greendata.lectura (alerta);
-CREATE INDEX IF NOT EXISTS ON greendata.accion (idPlanta);
+
