@@ -52,8 +52,8 @@ describe('Readings ingest & history (mocked Cassandra)', () => {
 
   it('GET /sensors/history returns formatted points', async () => {
     // First call returns 2 rows
-    const row = (ts: Date, v: number) => ({ get: (k: string) => (k === 'ts' ? ts : v) });
-    fakeClient.execute.mockResolvedValueOnce({ rows: [row(new Date('2025-11-03T00:00:00Z'), 10), row(new Date('2025-11-03T00:01:00Z'), 20)] });
+    const row = (ts: Date, v: number) => ({ get: (k: string) => (k === 'ts' ? ts : v) } as any);
+    fakeClient.execute.mockResolvedValueOnce({ rows: [row(new Date('2025-11-03T00:00:00Z'), 10), row(new Date('2025-11-03T00:01:00Z'), 20)] } as any);
     // Subsequent calls empty
     fakeClient.execute.mockResolvedValue({ rows: [] });
 
@@ -66,4 +66,3 @@ describe('Readings ingest & history (mocked Cassandra)', () => {
     expect(res.body.data[0]).toHaveProperty('value');
   });
 });
-

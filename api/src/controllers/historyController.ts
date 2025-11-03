@@ -52,8 +52,11 @@ export const getSensorHistory = async (req: Request, res: Response) => {
   if (!client) client = await initCassandra();
 
   const now = new Date();
-  const from = parseTs(fromParam) ?? now;
-  const to = parseTs(toParam) ?? from;
+  let from = parseTs(fromParam) ?? now;
+  let to = parseTs(toParam) ?? from;
+  if (from.getTime() > to.getTime()) {
+    const tmp = from; from = to; to = tmp;
+  }
 
   // Construir lista de particiones por día (máximo 31 días)
   const ymdList = makeYmdList(from, to, 31);

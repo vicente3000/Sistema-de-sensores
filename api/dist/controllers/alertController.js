@@ -1,12 +1,14 @@
 import { Alert } from '../models/alert.js';
 import { ok } from '../utils/apiResponse.js';
 export const listAlerts = async (req, res) => {
-    const { plantId, sensorId, from, to, limit } = req.query;
+    const { plantId, sensorId, from, to, limit, level } = req.query;
     const q = {};
     if (plantId)
         q.plantId = plantId;
     if (sensorId)
         q.sensorId = sensorId;
+    if (level)
+        q.level = level;
     if (from || to) {
         q.createdAt = {};
         if (from)

@@ -8,7 +8,8 @@ export const initCassandra = async () => {
             .split(',')
             .map(s => s.trim())
             .filter(Boolean);
-        const localDataCenter = process.env.CASSANDRA_DATACENTER || process.env.CASSANDRA_DC || 'dc1';
+        // El contenedor oficial suele exponer el DC por defecto como 'datacenter1'
+        const localDataCenter = process.env.CASSANDRA_DATACENTER || process.env.CASSANDRA_DC || 'datacenter1';
         const keyspace = process.env.CASSANDRA_KEYSPACE || 'greendata';
         const client = new Client({
             contactPoints,

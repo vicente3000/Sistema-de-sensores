@@ -11,9 +11,10 @@ export function notFound(req, res) {
     res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 }
 export function errorHandler(err, req, res, _next) {
+    const isProd = process.env.NODE_ENV === 'production';
     if (err instanceof HttpError) {
         return res.status(err.status).json({ error: err.message, details: err.details });
     }
     console.error('Unhandled error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error', ...(isProd ? {} : { details: String(err?.message || err) }) });
 }

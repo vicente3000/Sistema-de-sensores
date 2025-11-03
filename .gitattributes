@@ -1,0 +1,25 @@
+# Normalize text files to LF in repo; let Git convert on checkout if configured
+* text=auto eol=lf
+
+# Mark common binary formats explicitly
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+
+# Shell / scripts and YAML should be LF
+*.sh text eol=lf
+*.bash text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+
+# Keep Windows PowerShell scripts with CRLF on checkout if needed
+*.ps1 text eol=crlf
+

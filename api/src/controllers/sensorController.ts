@@ -9,8 +9,16 @@ export const listSensorsByPlant = async (req: Request, res: Response) => {
   const { plantId } = req.params;
   const exists = await Plant.exists({ _id: plantId });
   if (!exists) throw new HttpError(404, 'Plant not found');
-  const items = await Sensor.find({ plantId }).sort({ createdAt: -1 }).lean();
-  return res.json(ok(items));
+  const limit = Math.min(Number(req.query.limit ?? 50), 100);
+  const offset = Math.max(Number(req.query.offset ?? 0), 0);
+  const type = (req.query.type as string | undefined);
+  const q: any = { plantId };
+  if (type) q.type = type;
+  const [items, total] = await Promise.all([
+    Sensor.find(q).sort({ createdAt: -1 }).skip(offset).limit(limit).lean(),
+    Sensor.countDocuments(q)
+  ]);
+  return res.json(ok({ items, total, limit, offset }));
 };
 
 export const createSensor = async (req: Request, res: Response) => {
@@ -44,4 +52,3 @@ export const deleteSensor = async (req: Request, res: Response) => {
   await Threshold.deleteMany({ sensorId });
   return res.json(ok({ deleted: true }));
 };
-

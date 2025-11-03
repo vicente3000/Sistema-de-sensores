@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: GreenData API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+paths:
+  /plants:
+    get:
+      summary: List plants
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create plant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantCreate'
+      responses:
+        '201': { description: Created }
+  /plants/{id}:
+    get:
+      summary: Get plant
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    patch:
+      summary: Update plant
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantUpdate'
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete plant
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /plants/{plantId}/sensors:
+    get:
+      summary: List sensors for plant
+      parameters:
+        - in: path
+          name: plantId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string, enum: [humidity, ph, temp, lux] }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create sensor for plant
+      parameters:
+        - in: path
+          name: plantId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorCreate'
+      responses:
+        '201': { description: Created }
+  /sensors/{sensorId}:
+    get:
+      summary: Get sensor
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    patch:
+      summary: Update sensor
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorUpdate'
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete sensor
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /sensors/{sensorId}/threshold:
+    get:
+      summary: Get threshold
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Upsert threshold
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Threshold'
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete threshold
+      parameters:
+        - in: path
+          name: sensorId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /alerts:
+    get:
+      summary: List alerts
+      parameters:
+        - in: query
+          name: plantId
+          schema: { type: string }
+        - in: query
+          name: sensorId
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: level
+          schema: { type: string, enum: [normal, grave, critica] }
+      responses:
+        '200': { description: OK }
+  /sensors/history:
+    get:
+      summary: Sensor history
+      parameters:
+        - in: query
+          name: plant
+          required: true
+          schema: { type: string }
+        - in: query
+          name: sensor
+          required: true
+          schema:
+            type: string
+            enum: [humidity, ph, temp, lux]
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: maxPoints
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+  /readings:
+    post:
+      summary: Insert single reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reading'
+      responses:
+        '201': { description: Created }
+  /readings/batch:
+    post:
+      summary: Insert batch of readings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                readings:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Reading'
+      responses:
+        '201': { description: Created }
+components:
+  schemas:
+    PlantCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        type: { type: string }
+    PlantUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        type: { type: string }
+    SensorCreate:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [humidity, ph, temp, lux] }
+        unit: { type: string }
+    SensorUpdate:
+      type: object
+      properties:
+        type: { type: string, enum: [humidity, ph, temp, lux] }
+        unit: { type: string }
+    Threshold:
+      type: object
+      required: [min, max]
+      properties:
+        min: { type: number }
+        max: { type: number }
+        hysteresis: { type: number }
+    Reading:
+      type: object
+      required: [plant, sensorType, sensorId, value]
+      properties:
+        plant: { type: string }
+        sensorType: { type: string, enum: [humidity, ph, temp, lux] }
+        sensorId: { type: string }
+        value: { type: number }
+        ts: { oneOf: [{ type: string, format: date-time }, { type: number }] }

@@ -15,10 +15,10 @@ export function notFound(req: Request, res: Response) {
 }
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  const isProd = process.env.NODE_ENV === 'production';
   if (err instanceof HttpError) {
     return res.status(err.status).json({ error: err.message, details: err.details });
   }
   console.error('Unhandled error:', err);
-  return res.status(500).json({ error: 'Internal Server Error' });
+  return res.status(500).json({ error: 'Internal Server Error', ...(isProd ? {} : { details: String((err as any)?.message || err) }) });
 }
-

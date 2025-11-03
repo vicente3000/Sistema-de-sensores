@@ -36,8 +36,10 @@
     - 200 → `{ data: { deleted: true } }` | 404
 
 - Sensores
-  - GET `/plants/:plantId/sensors`
-    - 200 → `{ data: Sensor[] }` | 404 si `plantId` no existe
+- GET `/plants/:plantId/sensors?type=&limit=&offset=`
+  - Filtros: `type` opcional (`humidity|ph|temp|lux`)
+  - Paginación: `limit` 1..100 (default 50), `offset` ≥ 0
+  - 200 → `{ data: { items: Sensor[], total, limit, offset } }` | 404 si `plantId` no existe
   - POST `/plants/:plantId/sensors`
     - Body: `{ type: 'humidity'|'ph'|'temp'|'lux', unit?: string }`
     - 201 → `{ data: Sensor }` | 404 si `plantId` no existe
@@ -60,9 +62,10 @@
     - 200 → `{ data: { deleted: true } }` | 404
 
 - Alertas (solo lectura)
-  - GET `/alerts?plantId=&sensorId=&from=&to=&limit=`
-    - `from`, `to`: ISO opcionales (filtran por `createdAt`)
-    - 200 → `{ data: Alert[] }`
+- GET `/alerts?plantId=&sensorId=&from=&to=&limit=`
+  - `from`, `to`: ISO opcionales (filtran por `createdAt`)
+  - `level`: `normal|grave|critica` opcional
+  - 200 → `{ data: Alert[] }`
 
 -- Histórico (Cassandra)
   - GET `/sensors/history?plant=&sensor=&limit=&from=&to=&maxPoints=`
@@ -136,6 +139,9 @@
 - `CASSANDRA_DATACENTER=datacenter1`
 - `CASSANDRA_KEYSPACE=greendata`
 - `SOCKET_IO_CORS_ORIGIN=*`
+ - `ALLOWED_ORIGIN` (CORS en producción; en dev se permite `*`)
+ - `READINGS_STRICT_VALIDATE=0|1` (forzar validación en ingesta contra Mongo)
+ - `READINGS_MAX_BATCH=1000` (tamaño máximo de batch)
 
 ## 6) Levantamiento local
 - Mongo y Cassandra (Docker):
@@ -154,12 +160,17 @@
 
 ## 9) Ingesta de Lecturas (nuevo)
 - POST `/readings`
+  - Query opcional: `?validate=1` para validar `sensorId` y `sensorType` contra Mongo
   - Body: `{ plant: string, sensorType: 'humidity'|'ph'|'temp'|'lux', sensorId: string, value: number, ts?: ISO|epoch }`
   - 201 → `{ data: { inserted: 1 } }`
 - POST `/readings/batch`
+  - Query opcional: `?validate=1` para validar todos los `sensorId/sensorType`
   - Body: `{ readings: Array<{ plant, sensorType, sensorId, value, ts? }>} `
   - 201 → `{ data: { inserted: N } }`
-- Notas:
+  - Notas:
   - `ts` opcional: si no se envía, se usa el server time.
   - La API calcula `ymd` (LocalDate) y escribe en `greendata.readings`.
   - Esta ingesta aún no emite sockets ni genera alertas; el equipo de tiempo real podrá engancharse aquí.
+
+## 10) Health
+- GET `/health` → `{ ok: boolean, mongo: { ok }, cassandra: { ok } }`
