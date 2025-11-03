@@ -1,39 +1,13 @@
-
 CREATE KEYSPACE IF NOT EXISTS greendata
 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
-CREATE TABLE IF NOT EXISTS greendata.planta (
-    id TEXT PRIMARY KEY,
-    nombre TEXT,
-    especie TEXT,
-    ubicacion TEXT
-);
-
-CREATE TABLE IF NOT EXISTS greendata.sensor (
-    idPlanta TEXT,
-    id TEXT,
-    tipo TEXT,
-    intervalo INT,
-    PRIMARY KEY (idPlanta, id)
-);
-
-CREATE TABLE IF NOT EXISTS greendata.lectura (
-    id TEXT,
-    idSensor TEXT,
-    fecha TIMESTAMP,
-    valor FLOAT,
-    alerta TEXT,
-    PRIMARY KEY ((idSensor), fecha, id)
-) WITH CLUSTERING ORDER BY (fecha DESC);
-
-CREATE TABLE IF NOT EXISTS greendata.accion (
-    idPlanta TEXT,
-    id TEXT,
-    tipo TEXT,
-    fecha TIMESTAMP,
-    estado TEXT,
-    PRIMARY KEY (idPlanta, id)
-);
-
-CREATE INDEX IF NOT EXISTS ON greendata.lectura (alerta);
-
+-- Tabla de lecturas optimizada por día y tipo de sensor
+CREATE TABLE IF NOT EXISTS greendata.readings (
+  plant_id   text,
+  sensor_type text,   -- 'humidity'|'ph'|'temp'|'lux'
+  ymd        date,    -- partición por día
+  ts         timestamp,  -- clustering
+  sensor_id  text,
+  value      double,
+  PRIMARY KEY ((plant_id, sensor_type, ymd), ts, sensor_id)
+) WITH CLUSTERING ORDER BY (ts DESC);

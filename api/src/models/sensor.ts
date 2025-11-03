@@ -14,4 +14,6 @@ const sensorSchema = new Schema<ISensor>({
   unit: { type: String },
 }, { timestamps: true });
 
+sensorSchema.index({ plantId: 1 });
+
 export const Sensor = model<ISensor>('Sensor', sensorSchema);

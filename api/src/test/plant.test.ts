@@ -1,8 +1,8 @@
 import request from "supertest";
 import express from "express";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import plantRoute from "../routes/plantRoute";
-import { connectMongo } from "../database/mongoDB/config";
+import plantRoute from "../routes/plantRoute.js";
+import { connectMongo } from "../database/mongoDB/config.js";
 import mongoose from "mongoose";
 
 // Crear app temporal para test
