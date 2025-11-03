@@ -163,24 +163,55 @@ La organización del repositorio **GreenData** sigue la arquitectura en capas (f
 
 ```bash
 greendata/
-├─ api/                        # Back-end (Node.js + Express + Socket.IO, TypeScript)
-│  ├─ src/
-│  │  ├─ routes/               # Endpoints REST (plants, sensors, thresholds, readings, alerts)
-│  │  ├─ models/               # Modelos de MongoDB (Mongoose)
-│  │  ├─ services/             # Lógica de negocio (ingesta, alertas, consultas Cassandra)
-│  │  ├─ db/                   # Conexión a MongoDB y Cassandra
-│  │  ├─ utils/                # Funciones auxiliares (validaciones, downsampling, etc.)
-│  │  └─ index.ts              # Punto de entrada del servidor (Express + Socket.IO)
-│  ├─ tests/                   # Tests unitarios y de integración
-│  └─ package.json
+backend/
 │
-├─ frontend/                   # Front-end (React + Vite + Recharts)
-│  ├─ src/
-│  │  ├─ components/           # Componentes reutilizables (cards, gráficos, formularios)
-│  │  ├─ pages/                # Vistas principales (Dashboard, Plants, Sensors, Alerts)
-│  │  ├─ services/             # Cliente API REST + Socket.IO
-│  │  └─ App.tsx               # Punto de entrada de la app
-│  ├─ public/                  # Archivos estáticos
+├── src/
+│   ├── api/
+│   │   ├── index.ts              # Registro de rutas y middlewares
+│   │   ├── plants.controller.ts  # CRUD de plantas y sensores
+│   │   ├── readings.controller.ts# Lecturas históricas
+│   │   ├── alerts.controller.ts  # Listado de alertas
+│   │   └── health.controller.ts  # Healthcheck /api/health
+│   │
+│   ├── services/
+│   │   ├── ingest.service.ts     # Procesa lecturas entrantes
+│   │   ├── alert.service.ts      # Evalúa umbrales y genera alertas
+│   │   ├── plant.service.ts      # Lógica de negocio para plantas
+│   │   └── schedule.service.ts   # Interpreta modos predefinida/horario/rango
+│   │
+│   ├── models/
+│   │   ├── plant.model.ts        # Esquema MongoDB de plantas
+│   │   ├── sensor.model.ts       # Esquema MongoDB de sensores
+│   │   ├── alert.model.ts        # Esquema MongoDB de alertas
+│   │   └── reading.model.ts      # Modelo de lectura (si usas Mongo)
+│   │
+│   ├── sockets/
+│   │   ├── index.ts              # Configuración de Socket.IO
+│   │   ├── alerts.socket.ts      # Emisión de alertas
+│   │   └── readings.socket.ts    # Emisión en tiempo real de sensores
+│   │
+│   ├── db/
+│   │   ├── mongo.ts              # Conexión a MongoDB
+│   │   └── cassandra.ts          # Conexión a Cassandra
+│   │
+│   ├── utils/
+│   │   ├── logger.ts             # Winston o consola estructurada
+│   │   ├── env.ts                # Validación de variables de entorno
+│   │   ├── errors.ts             # Clases de error custom
+│   │   └── time.ts               # Fechas, ISO, zonas horarias
+│   │
+│   ├── config/
+│   │   ├── cors.ts               # CORS dinámico
+│   │   ├── express.ts            # Configuración base de Express
+│   │   └── socket.ts             # Setup de Socket.IO con namespaces opcionales
+│   │
+│   ├── app.ts                    # Inicializa Express + Socket.IO
+│   └── server.ts                 # Punto de entrada principal
+│
+├── tests/
+│   ├── api/
+│   ├── services/
+│   └── utils/
 │  └─ package.json
 │
 ├─ simulator/                  # Scripts en Python para simular sensores
