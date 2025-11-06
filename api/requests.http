@@ -1,0 +1,105 @@
+### Health
+GET http://localhost:3000/health
+
+### Plants
+# Create
+POST http://localhost:3000/api/v1/plants
+Content-Type: application/json
+
+{
+  "name": "Demo",
+  "type": "X"
+}
+
+### List
+GET http://localhost:3000/api/v1/plants?limit=10&offset=0
+
+### Get by id (replace {{plantId}})
+GET http://localhost:3000/api/v1/plants/{{plantId}}
+
+### Update
+PATCH http://localhost:3000/api/v1/plants/{{plantId}}
+Content-Type: application/json
+
+{
+  "type": "Aromática"
+}
+
+### Delete
+DELETE http://localhost:3000/api/v1/plants/{{plantId}}
+
+### Sensors
+# Create for plant
+POST http://localhost:3000/api/v1/plants/{{plantId}}/sensors
+Content-Type: application/json
+
+{
+  "type": "humidity"
+}
+
+### List sensors for plant
+GET http://localhost:3000/api/v1/plants/{{plantId}}/sensors
+
+### Get sensor by id
+GET http://localhost:3000/api/v1/sensors/{{sensorId}}
+
+### Update sensor
+PATCH http://localhost:3000/api/v1/sensors/{{sensorId}}
+Content-Type: application/json
+
+{
+  "unit": "C"
+}
+
+### Delete sensor
+DELETE http://localhost:3000/api/v1/sensors/{{sensorId}}
+
+### Threshold
+# Upsert
+PUT http://localhost:3000/api/v1/sensors/{{sensorId}}/threshold
+Content-Type: application/json
+
+{
+  "min": 30,
+  "max": 70,
+  "hysteresis": 2
+}
+
+### Get threshold
+GET http://localhost:3000/api/v1/sensors/{{sensorId}}/threshold
+
+### Delete threshold
+DELETE http://localhost:3000/api/v1/sensors/{{sensorId}}/threshold
+
+### Alerts (read-only)
+GET http://localhost:3000/api/v1/alerts?limit=10
+
+### Readings ingest
+# Single
+POST http://localhost:3000/api/v1/readings
+Content-Type: application/json
+
+{
+  "plant": "p1",
+  "sensorType": "humidity",
+  "sensorId": "s1",
+  "value": 55.2
+}
+
+### Batch
+POST http://localhost:3000/api/v1/readings/batch
+Content-Type: application/json
+
+{
+  "readings": [
+    { "plant": "p1", "sensorType": "humidity", "sensorId": "s1", "value": 41.1, "ts": "2025-11-03T03:10:00Z" },
+    { "plant": "p1", "sensorType": "humidity", "sensorId": "s1", "value": 39.5 }
+  ]
+}
+
+### History
+GET http://localhost:3000/api/v1/sensors/history?plant=p1&sensor=humidity&limit=100
+
+### History with range + downsample
+GET http://localhost:3000/api/v1/sensors/history?plant=p1&sensor=humidity&from=2025-11-02T00:00:00Z&to=2025-11-03T23:59:59Z&limit=50000&maxPoints=5
+
