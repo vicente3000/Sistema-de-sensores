@@ -1,6 +1,7 @@
 // inicializa y maneja socket.io para tiempo real
 import type { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
+import { sockets } from '../observability/metrics.js';
 
 let io: Server | null = null;
 
@@ -13,6 +14,7 @@ export function initSocket(server: HttpServer) {
   });
 
   io.on('connection', (socket) => {
+    sockets.inc();
     // suscribirse a canal de sensor
     socket.on('sensor:subscribe', (data: { plantId: string; sensor: string }) => {
       try {
@@ -27,6 +29,7 @@ export function initSocket(server: HttpServer) {
         socket.leave(room);
       } catch {}
     });
+    socket.on('disconnect', () => { sockets.dec(); });
   });
 
   return io;
@@ -61,4 +64,3 @@ export function emitAlert(payload: {
   if (!io) return;
   io.emit('alerts:new', payload);
 }
-

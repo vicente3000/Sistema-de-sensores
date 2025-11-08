@@ -15,6 +15,9 @@ import apiV1 from "./routes/v1/index.js";
 import legacyPlantRoute from "./routes/plantRoute.js";
 import { errorHandler, notFound } from './middlewares/error.js';
 import { initSocket } from './realtime/socket.js';
+import pinoHttp from 'pino-http';
+import { logger } from './observability/logger.js';
+import { httpMetrics, registry } from './observability/metrics.js';
 import mongoose from 'mongoose';
 
 // cargar variables de entorno
@@ -29,14 +32,12 @@ const isProd = process.env.NODE_ENV === 'production';
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 app.use(cors({ origin: isProd ? allowedOrigin : '*' }));
 app.use(helmet());
-// logger json con request id
-app.use((req, _res, next) => {
-  const id = (req.headers['x-request-id'] as string) || crypto.randomUUID();
-  (req as any).id = id;
-  const log = { t: new Date().toISOString(), id, method: req.method, url: req.url };
-  console.log(JSON.stringify(log));
-  next();
-});
+// pino http + request id
+// pino-http con request id (cast para compatibilidad de tipos en NodeNext)
+const pinoMwFactory = (pinoHttp as unknown as (opts: any) => any);
+app.use(pinoMwFactory({ logger, genReqId: (req: any) => (req.headers['x-request-id'] as string) || crypto.randomUUID() }));
+// http metrics
+app.use(httpMetrics);
 
 // puerto
 const PORT = process.env.PORT || 3000;
@@ -50,9 +51,9 @@ async function startServer() {
     try { await initCassandra(); } catch { console.warn('Cassandra no disponible (afecta /sensors/history)'); }
 
     const server = app.listen(PORT, () => {
-      console.log(`o. Server listening on http://localhost:${PORT}`);
+      logger.info({ msg: 'server_listening', port: PORT });
     });
-    try { initSocket(server as any); console.log('o. Socket.IO ready'); } catch { console.warn('s? Socket.IO not ready'); }
+    try { initSocket(server as any); logger.info({ msg: 'socket_ready' }); } catch { logger.warn({ msg: 'socket_not_ready' }); }
   } catch (error) {
     console.error("Error al iniciar el servidor:", error);
     process.exit(1);
@@ -80,6 +81,19 @@ app.get('/health', async (_req, res) => {
   } catch { health.ok = false; }
   res.json(health);
 });
+// liveness y readiness
+app.get('/health/live', (_req, res) => res.json({ ok: true }));
+app.get('/health/ready', async (_req, res) => {
+  const health: any = { ok: true, mongo: { ok: false }, cassandra: { ok: false } };
+  try { await mongoose.connection.db?.admin().ping(); health.mongo.ok = true; } catch { health.ok = false; }
+  try { const client = getCassandra(); if (client) { await client.execute('SELECT now() FROM system.local'); health.cassandra.ok = true; } } catch { health.ok = false; }
+  res.json(health);
+});
+// metrics
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', registry.contentType);
+  res.send(await registry.metrics());
+});
 
 // swagger UI
 if (!isProd || process.env.ENABLE_DOCS === '1') {
@@ -101,4 +115,3 @@ app.use(notFound);
 app.use(errorHandler);
 
 startServer();
-

@@ -8,6 +8,7 @@ import { Sensor } from '../models/sensor.js';
 import { HttpError } from '../middlewares/error.js';
 import { emitSensorData } from '../realtime/socket.js';
 import { processReadingAlert } from '../services/alertService.js';
+import { domain } from '../observability/metrics.js';
 
 function parseTs(ts?: string | number): Date {
   if (ts === undefined) return new Date();
@@ -44,6 +45,7 @@ export const postReading = async (req: Request, res: Response) => {
     const tsISO = parseTs(req.body.ts).toISOString();
     emitSensorData(req.body.plant, req.body.sensorType, tsISO, req.body.value);
     void processReadingAlert({ sensorId: req.body.sensorId, sensorType: req.body.sensorType, value: req.body.value, ts: new Date(tsISO) });
+    domain.readingsInserted(1);
   } catch {}
   return res.status(201).json(ok({ inserted: 1 }));
 };
@@ -90,6 +92,7 @@ export const postReadingsBatch = async (req: Request, res: Response) => {
       emitSensorData(r.plant, r.sensorType, ts.toISOString(), r.value);
       void processReadingAlert({ sensorId: r.sensorId, sensorType: r.sensorType, value: r.value, ts });
     }
+    if (items.length) domain.readingsInserted(items.length);
   } catch {}
   return res.status(201).json(ok({ inserted: items.length }));
 };

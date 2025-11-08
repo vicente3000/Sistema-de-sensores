@@ -34,6 +34,10 @@ export async function createPlant(input: { name: string; type?: string }) {
   });
 }
 
+export async function getPlant(id: string) {
+  return http<PlantDoc>(v1(`/plants/${id}`));
+}
+
 export async function updatePlant(id: string, input: { name?: string; type?: string }) {
   return http<PlantDoc>(v1(`/plants/${id}`), {
     method: 'PATCH',
@@ -96,4 +100,3 @@ export async function listAlerts(params?: { plantId?: string; sensorId?: string;
   if (params?.limit) url.searchParams.set('limit', String(params.limit));
   return http<AlertDoc[]>(url.toString());
 }
-

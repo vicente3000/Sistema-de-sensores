@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { socket } from "../services/socket";
-import { listAlerts } from "../lib/Api";
+import { listAlerts, listPlants, listSensors, getPlant } from "../lib/Api";
 import "../css/Alerts.css";
 
 type SensorType = "humidity" | "ph" | "temp" | "lux";
@@ -42,6 +42,57 @@ export default function Alerts() {
     const [connected, setConnected] = useState(socket.connected);
     const [alerts, setAlerts] = useState<UiAlert[]>([]);
     const [limit, setLimit] = useState(50);
+    // filtros y tabla
+    const [fPlant, setFPlant] = useState("");
+    const [fSensor, setFSensor] = useState("");
+    const [fLevel, setFLevel] = useState("");
+    const [fFrom, setFFrom] = useState(""); // datetime-local
+    const [fTo, setFTo] = useState("");
+    const [rows, setRows] = useState<UiAlert[]>([]);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    // opciones de autocompletado
+    const [plantOptions, setPlantOptions] = useState<Array<{ id: string; name: string }>>([]);
+    const [sensorOptions, setSensorOptions] = useState<Array<{ id: string; type: SensorType }>>([]);
+    // cache de nombres de plantas
+    const [plantNames, setPlantNames] = useState<Record<string,string>>({});
+
+    function displayPlant(id: string, fallback?: string) {
+        const name = plantNames[id] || fallback || id;
+        const max = 24;
+        return name.length > max ? name.slice(0, max) + '...' : name;
+    }
+
+    async function ensurePlantNames(ids: string[]) {
+        const toFetch = ids.filter(id => !plantNames[id]);
+        if (!toFetch.length) return;
+        const updates: Record<string,string> = {};
+        for (const id of toFetch) {
+            try { const p = await getPlant(id); updates[id] = p.name; } catch {}
+        }
+        if (Object.keys(updates).length) setPlantNames(prev => ({ ...prev, ...updates }));
+    }
+
+    // cargar plantas para autocompletar
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await listPlants({ limit: 100 });
+                setPlantOptions(res.items.map((p: any) => ({ id: p._id, name: p.name })));
+            } catch {}
+        })();
+    }, []);
+
+    // cargar sensores al elegir planta
+    useEffect(() => {
+        (async () => {
+            if (!fPlant) { setSensorOptions([]); return; }
+            try {
+                const res = await listSensors(fPlant, { limit: 100 });
+                setSensorOptions(res.items.map((s: any) => ({ id: s._id, type: s.type })));
+            } catch { setSensorOptions([]); }
+        })();
+    }, [fPlant]);
 
     // carga inicial
     useEffect(() => {
@@ -57,6 +108,9 @@ export default function Alerts() {
                 level: r.level === 'critica' ? 'red' : 'orange',
             }));
             setAlerts(mapped);
+            // pre cargar nombres
+            const uniq = Array.from(new Set(mapped.map(m => m.plantId)));
+            ensurePlantNames(uniq);
         })();
     }, []);
 
@@ -82,6 +136,8 @@ export default function Alerts() {
                 const next = [ui, ...prev];
                 return next.length > limit ? next.slice(0, limit) : next;
             });
+            // fetch nombre si no lo tenemos
+            if (!plantNames[msg.plantId] && !msg.plantName) ensurePlantNames([msg.plantId]);
         };
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
@@ -129,7 +185,7 @@ export default function Alerts() {
                 {alerts.map(a => (
                     <article key={a.id} className={`alert-card alert--${a.level}`}>
                         <h3>
-                            {a.plantName || a.plantId} - {a.sensorType.toUpperCase()}&nbsp;
+                            {displayPlant(a.plantId, a.plantName)} - {a.sensorType.toUpperCase()}&nbsp;
                             <span className={`badge ${a.level === 'red' ? 'red' : 'orange'}`}>
                                 {a.level === 'red' ? 'Critica' : 'Limite'}
                             </span>
@@ -144,7 +200,117 @@ export default function Alerts() {
                     </article>
                 ))}
             </div>
+
+            {/* filtros y tabla de alertas */}
+            <div className="filters">
+                <div className="field">
+                    <label>Planta</label>
+                    <input list="plants-dl" placeholder="nombre o id" value={fPlant} onChange={e => setFPlant(e.target.value)} />
+                    <datalist id="plants-dl">
+                        {plantOptions.map(p => (
+                            <option key={p.id} value={p.id} label={`${p.name} (${p.id.slice(0,6)}...)`}></option>
+                        ))}
+                    </datalist>
+                </div>
+                <div className="field">
+                    <label>Sensor</label>
+                    <input list="sensors-dl" placeholder="id" value={fSensor} onChange={e => setFSensor(e.target.value)} />
+                    <datalist id="sensors-dl">
+                        {sensorOptions.map(s => (
+                            <option key={s.id} value={s.id} label={`${s.type.toUpperCase()} (${s.id.slice(0,6)}...)`}></option>
+                        ))}
+                    </datalist>
+                </div>
+                <div className="field">
+                    <label>Nivel</label>
+                    <select value={fLevel} onChange={e => setFLevel(e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="grave">Grave</option>
+                        <option value="critica">Critica</option>
+                    </select>
+                </div>
+                <div className="field">
+                    <label>Desde</label>
+                    <input type="datetime-local" value={fFrom} onChange={e => setFFrom(e.target.value)} />
+                </div>
+                <div className="field">
+                    <label>Hasta</label>
+                    <input type="datetime-local" value={fTo} onChange={e => setFTo(e.target.value)} />
+                </div>
+                <div className="field">
+                    <label>&nbsp;</label>
+                    <button onClick={async () => {
+                        const params: any = { limit: 200 };
+                        if (fPlant.trim()) params.plantId = fPlant.trim();
+                        if (fSensor.trim()) params.sensorId = fSensor.trim();
+                        if (fLevel) params.level = fLevel;
+                        const toIso = (v: string) => v ? new Date(v).toISOString() : undefined;
+                        const fromISO = toIso(fFrom); const toISO = toIso(fTo);
+                        if (fromISO) params.from = fromISO;
+                        if (toISO) params.to = toISO;
+                        const apiRows = await listAlerts(params);
+                        const mapped: UiAlert[] = apiRows.map((r: any) => ({
+                            id: r._id,
+                            plantId: r.plantId,
+                            sensorId: r.sensorId,
+                            sensorType: 'humidity',
+                            value: r.value,
+                            tsISO: new Date(r.createdAt).toISOString(),
+                            level: r.level === 'critica' ? 'red' : 'orange',
+                        }));
+                        setRows(mapped); setPage(1);
+                    }}>Buscar</button>
+                </div>
+                <div className="field">
+                    <label>&nbsp;</label>
+                    <button className="btn-secondary" onClick={() => { setFPlant(''); setFSensor(''); setFLevel(''); setFFrom(''); setFTo(''); setRows([]); setPage(1); }}>Limpiar</button>
+                </div>
+            </div>
+
+            <table className="alert-table">
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Planta</th>
+                    <th>Sensor</th>
+                    <th>Nivel</th>
+                    <th>Valor</th>
+                    <th>Umbral</th>
+                </tr>
+                </thead>
+                <tbody>
+                {rows.slice((page-1)*pageSize, (page-1)*pageSize + pageSize).map(r => (
+                    <tr key={r.id}>
+                        <td>{new Date(r.tsISO).toLocaleString()}</td>
+                        <td>{r.plantId}</td>
+                        <td>{r.sensorId}</td>
+                        <td>{r.level === 'red' ? (<><span className="level-dot level-red"/>Critica</>) : (<><span className="level-dot level-orange"/>Grave</>)}</td>
+                        <td>{r.value.toFixed(2)}</td>
+                        <td>{r.threshold ? `${typeof r.threshold.min==='number' ? 'min '+r.threshold.min : ''} ${typeof r.threshold.max==='number' ? 'max '+r.threshold.max : ''}` : '-'}</td>
+                    </tr>
+                ))}
+                {rows.length === 0 && (
+                    <tr><td colSpan={6} className="alert-meta">Sin resultados</td></tr>
+                )}
+                </tbody>
+            </table>
+            <div className="pager">
+                <div>
+                    <button className="btn" disabled={page===1} onClick={() => setPage(p => Math.max(1, p-1))}>Anterior</button>
+                    <button className="btn" disabled={(page*pageSize)>=rows.length} onClick={() => setPage(p => p+1)}>Siguiente</button>
+                </div>
+                <div>
+                    <span className="muted">Mostrando {(rows.length===0?0:(page-1)*pageSize+1)}-{Math.min(page*pageSize, rows.length)} de {rows.length}</span>
+                    &nbsp; · &nbsp;
+                    <label>tamano&nbsp;
+                        <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
         </section>
     );
 }
-
