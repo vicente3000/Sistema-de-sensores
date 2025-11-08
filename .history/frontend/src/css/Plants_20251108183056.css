@@ -1,0 +1,222 @@
+.plants-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  flex-wrap: wrap; /* evita que se desordene en pantallas chicas */
+}
+
+.search {
+  flex: 1;
+  max-width: 420px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #26303b;
+  background: #0f141a;
+  color: var(--fg);
+}
+
+/* grid principal de tarjetas */
+.plants-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.plant-card {
+  background: var(--card);
+  border: 1px solid #1e2630;
+  border-radius: 16px;
+  padding: 16px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+/* header de la tarjeta */
+.plant-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.plant-title {
+  margin: 0;
+  color: var(--accent);
+}
+
+.plant-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pill {
+  border: 1px solid #26303b;
+  background: #0f141a;
+  color: var(--fg);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  padding: 2px 10px;
+}
+
+.pill.muted {
+  color: var(--muted);
+}
+
+/* lista de sensores */
+.sensor-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sensor-list.compact .sensor-item {
+  background: #0f141a;
+  border: 1px solid #26303b;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap; /* permite que el contenido baje a otra linea */
+}
+
+.sensor-list.compact .sensor-item > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap; /* inputs + botones no se salen */
+}
+
+.sensor-list.compact input[type="number"] {
+  max-width: 90px; /* evita inputs gigantes */
+}
+
+/* fila de botones generales */
+.actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap; /* si no cabe, baja de linea */
+}
+
+/* estilos de botones dentro de la tarjeta */
+.plant-card button {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.plant-card button:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: #0f141a;
+  border: 1px solid #26303b;
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #160a0a;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.sm {
+  font-size: 0.85rem;
+}
+
+/* grids internos */
+.grid-2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.col-span-2 {
+  grid-column: span 2;
+}
+
+/* edicion organizada dentro de la tarjeta */
+.edit-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* nos aseguramos que la tarjeta grande ocupe todo el ancho del grid */
+.edit-grid .col-span-2 {
+  grid-column: 1 / -1;
+}
+
+.subcard {
+  background: #0f141a;
+  border: 1px solid #26303b;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.subcard h3 {
+  margin: 0 0 8px;
+  color: var(--accent);
+}
+
+.subcard .form {
+  max-width: unset;
+  margin-top: 0;
+}
+
+/* controles de umbrales (fila de min/max + botones) */
+.sensor-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap; /* clave para que no se salga horizontalmente */
+}
+
+/* --------- RESPONSIVE --------- */
+
+@media (max-width: 900px) {
+  .edit-grid {
+    grid-template-columns: 1fr; /* las subcards una debajo de la otra */
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr; /* inputs de formularios en columna */
+  }
+
+  .plants-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .plants-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sensor-list.compact .sensor-item {
+    align-items: flex-start;
+  }
+}
