@@ -4,7 +4,7 @@ import { io, Socket } from "socket.io-client";
 export type SensorType = "humidity" | "ph" | "temp" | "lux";
 export type LivePoint = { plantId?: string; sensor?: SensorType; tsISO: string; value: number };
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000"; // ojo: tu zip usa 4000 por defecto
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
 
 export type LiveSubscription = { unsubscribe: () => void };
 

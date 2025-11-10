@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Alert } from '../models/alert.js';
 import { ok } from '../utils/apiResponse.js';
+import { HttpError } from '../middlewares/error.js';
 
 export const listAlerts = async (req: Request, res: Response) => {
   const { plantId, sensorId, from, to, limit, level } = req.query as Record<string, string | undefined>;
@@ -16,4 +17,13 @@ export const listAlerts = async (req: Request, res: Response) => {
   const lim = Math.min(Number(limit ?? 50), 200);
   const items = await Alert.find(q).sort({ createdAt: -1 }).limit(lim).lean();
   return res.json(ok(items));
+};
+
+// marca una alerta como atendida (ack) y opcionalmente setea resolvedBy
+export const ackAlert = async (req: Request, res: Response) => {
+  const { id } = req.params as any;
+  const by = (req.body?.by as string | undefined) || 'user';
+  const doc = await Alert.findByIdAndUpdate(id, { acked: true, resolvedBy: by, ackedAt: new Date() }, { new: true }).lean();
+  if (!doc) throw new HttpError(404, 'Alert not found');
+  return res.json(ok(doc));
 };

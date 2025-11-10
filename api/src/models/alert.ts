@@ -6,6 +6,9 @@ export interface IAlert extends Document {
   value: number;
   message?: string;
   level: 'normal' | 'grave' | 'critica';
+  acked?: boolean;
+  resolvedBy?: string;
+  ackedAt?: Date;
   createdAt?: Date;
 }
 
@@ -15,10 +18,25 @@ const alertSchema = new Schema<IAlert>({
   value: { type: Number, required: true },
   message: { type: String },
   level: { type: String, enum: ['normal', 'grave', 'critica'], default: 'normal', index: true },
+  acked: { type: Boolean, default: false },
+  resolvedBy: { type: String },
+  ackedAt: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
 alertSchema.index({ plantId: 1, createdAt: -1 });
 alertSchema.index({ plantId: 1, level: 1, createdAt: -1 });
+
+// TTL opcional para recorte automatico
+const ttlSeconds = (() => {
+  const sec = Number(process.env.ALERTS_TTL_SECONDS || 0);
+  if (Number.isFinite(sec) && sec > 0) return Math.floor(sec);
+  const days = Number(process.env.ALERTS_TTL_DAYS || 0);
+  if (Number.isFinite(days) && days > 0) return Math.floor(days * 86400);
+  return 0;
+})();
+if (ttlSeconds > 0) {
+  alertSchema.index({ createdAt: 1 }, { expireAfterSeconds: ttlSeconds });
+}
 
 export const Alert = model<IAlert>('Alert', alertSchema);

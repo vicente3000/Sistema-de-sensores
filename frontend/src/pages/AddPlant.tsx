@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPlant, createSensor, upsertThreshold } from "../lib/Api";
 import "../css/AddPlant.css";
 
 type PlantType = string;
@@ -20,12 +21,15 @@ type SensorConfig = {
 
 export default function AddPlant() {
     const [step, setStep] = useState<1 | 2>(1);
+    const [plantId, setPlantId] = useState<string | null>(null);
+    const [msg, setMsg] = useState<string>("");
+    const [busy, setBusy] = useState(false);
 
-    // Paso 1
+    // paso 1
     const [name, setName] = useState("");
-    const [plantType, setPlantType] = useState<PlantType>(""); // texto libre
+    const [plantType, setPlantType] = useState<PlantType>("");
 
-    // Paso 2
+    // paso 2
     const [sensors, setSensors] = useState<SensorConfig[]>([]);
     const blankSensor: SensorConfig = useMemo(
         () => ({
@@ -44,13 +48,23 @@ export default function AddPlant() {
     );
     const [draft, setDraft] = useState<SensorConfig>(blankSensor);
 
-    const handleCreatePlant = (e: React.FormEvent) => {
+    // crea planta real y avanza
+    const handleCreatePlant = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) return;
-        // tipo puede ser vacío (si no lo quiere indicar)
-        setStep(2);
+        try {
+            setBusy(true);
+            setMsg("");
+            const created = await createPlant({ name: name.trim(), type: plantType || undefined });
+            setPlantId(created._id);
+            setMsg("Planta creada");
+            setStep(2);
+        } catch (err: any) {
+            setMsg(`Error: ${err.message ?? String(err)}`);
+        } finally { setBusy(false); }
     };
 
+    // agrega sensor al borrador local
     const addSensor = (e: React.FormEvent) => {
         e.preventDefault();
         const cleaned: SensorConfig = {
@@ -68,13 +82,32 @@ export default function AddPlant() {
 
     const removeSensor = (id: string) => setSensors((prev) => prev.filter((s) => s.id !== id));
 
-    const finish = (withSensors: boolean) => {
-        const payload = {
-            plant: { name, type: plantType || undefined },
-            sensors: withSensors ? sensors : [],
-        };
-        alert("(Demo) Se enviaría al backend:\n" + JSON.stringify(payload, null, 2));
+    // crea sensores/umbrales y resetea
+    const finish = async (withSensors: boolean) => {
+        if (!plantId) { setMsg("Crea la planta primero"); return; }
+        if (!withSensors || sensors.length === 0) {
+            setMsg("Planta guardada");
+        } else {
+            try {
+                setBusy(true);
+                for (const s of sensors) {
+                    const sensor = await createSensor(plantId, { type: s.type });
+                    if (typeof s.thresholdMin === 'number' && typeof s.thresholdMax === 'number') {
+                        await upsertThreshold(sensor._id, {
+                            min: s.thresholdMin,
+                            max: s.thresholdMax,
+                            hysteresis: 0,
+                        });
+                    }
+                }
+                setMsg("Sensores agregados");
+            } catch (e: any) {
+                setMsg(`Error creando sensores: ${e.message ?? String(e)}`);
+                return;
+            } finally { setBusy(false); }
+        }
         setStep(1);
+        setPlantId(null);
         setName("");
         setPlantType("");
         setSensors([]);
@@ -84,6 +117,7 @@ export default function AddPlant() {
     return (
         <section>
             <h1>Agregar planta</h1>
+            {msg && <p className="hint">{msg}</p>}
 
             {step === 1 && (
                 <form onSubmit={handleCreatePlant} className="form card">
@@ -95,7 +129,8 @@ export default function AddPlant() {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
-                            placeholder="Ej: Albahaca N°3"
+                            placeholder="Ej: Albahaca N3"
+                            disabled={busy}
                         />
                     </label>
 
@@ -106,16 +141,18 @@ export default function AddPlant() {
                             onChange={(e) => setPlantType(e.target.value)}
                             placeholder="Ej: Tomate, Lechuga, etc."
                             list="plantTypeSuggestions"
+                            disabled={busy}
                         />
                     </label>
 
                     <div className="actions-row">
-                        <button type="submit">Continuar (Agregar sensores)</button>
+                        <button type="submit" disabled={busy}>Continuar (Agregar sensores)</button>
                         <button
                             type="button"
                             className="btn-secondary"
                             title="Puedes editarla luego en 'Editar planta'"
                             onClick={() => finish(false)}
+                            disabled={busy || !plantId}
                         >
                             Guardar sin sensores
                         </button>
@@ -126,11 +163,7 @@ export default function AddPlant() {
             {step === 2 && (
                 <>
                     <div className="card">
-                        <h2>2) Agregar sensores (opcional)</h2>
-                        <p className="muted">
-                            Puedes agregar 0 o más sensores. Cada sensor debe tener su umbral y programación.
-                        </p>
-
+                        <h2>2) Agregar sensores</h2>
                         <form onSubmit={addSensor} className="grid-2">
                             <label>
                                 Tipo de sensor
@@ -146,47 +179,35 @@ export default function AddPlant() {
                             </label>
 
                             <label>
-                                Umbral mín. (opcional)
+                                Umbral min.
                                 <input
                                     type="number"
                                     step="any"
                                     value={draft.thresholdMin ?? ""}
-                                    onChange={(e) =>
-                                        setDraft({
-                                            ...draft,
-                                            thresholdMin: e.target.value === "" ? undefined : Number(e.target.value),
-                                        })
-                                    }
-                                    placeholder="p.ej. 30"
+                                    onChange={(e) => setDraft({ ...draft, thresholdMin: e.target.value === "" ? undefined : Number(e.target.value) })}
                                 />
                             </label>
 
                             <label>
-                                Umbral máx. (opcional)
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={draft.thresholdMax ?? ""}
-                                    onChange={(e) =>
-                                        setDraft({
-                                            ...draft,
-                                            thresholdMax: e.target.value === "" ? undefined : Number(e.target.value),
-                                        })
-                                    }
-                                    placeholder="p.ej. 70"
-                                />
-                            </label>
-
-                            <label>
-                                Modo de programación
+                                Modo de muestreo
                                 <select
                                     value={draft.scheduleMode}
                                     onChange={(e) => setDraft({ ...draft, scheduleMode: e.target.value as ScheduleMode })}
                                 >
                                     <option value="predefinida">Predefinida (cada N horas)</option>
-                                    <option value="horario">Por horario específico</option>
-                                    <option value="rango">Rangos (repetición uniforme)</option>
+                                    <option value="horario">Horario fijo</option>
+                                    <option value="rango">Rango de tiempo</option>
                                 </select>
+                            </label>
+
+                            <label>
+                                Umbral max.
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={draft.thresholdMax ?? ""}
+                                    onChange={(e) => setDraft({ ...draft, thresholdMax: e.target.value === "" ? undefined : Number(e.target.value) })}
+                                />
                             </label>
 
                             {draft.scheduleMode === "predefinida" && (
@@ -197,19 +218,17 @@ export default function AddPlant() {
                                         min={1}
                                         value={draft.everyHours ?? 2}
                                         onChange={(e) => setDraft({ ...draft, everyHours: Number(e.target.value) })}
-                                        placeholder="Ej: 2"
                                     />
                                 </label>
                             )}
 
                             {draft.scheduleMode === "horario" && (
-                                <label className="col-span-2">
-                                    Horas fijas (coma-separadas)
+                                <label>
+                                    Horarios fijos (HH:MM, separados por coma)
                                     <input
-                                        type="text"
-                                        value={draft.fixedTimes ?? ""}
+                                        placeholder="07:30, 12:00, 20:00"
+                                        value={draft.fixedTimes || ""}
                                         onChange={(e) => setDraft({ ...draft, fixedTimes: e.target.value })}
-                                        placeholder="Ej: 07:30, 11:00, 20:15"
                                     />
                                 </label>
                             )}
@@ -217,73 +236,42 @@ export default function AddPlant() {
                             {draft.scheduleMode === "rango" && (
                                 <>
                                     <label>
-                                        Inicio
-                                        <input
-                                            type="time"
-                                            value={draft.rangeStart ?? ""}
-                                            onChange={(e) => setDraft({ ...draft, rangeStart: e.target.value })}
-                                        />
+                                        Inicio (HH:MM)
+                                        <input value={draft.rangeStart || ""} onChange={(e) => setDraft({ ...draft, rangeStart: e.target.value })} />
                                     </label>
                                     <label>
-                                        Fin
-                                        <input
-                                            type="time"
-                                            value={draft.rangeEnd ?? ""}
-                                            onChange={(e) => setDraft({ ...draft, rangeEnd: e.target.value })}
-                                        />
+                                        Fin (HH:MM)
+                                        <input value={draft.rangeEnd || ""} onChange={(e) => setDraft({ ...draft, rangeEnd: e.target.value })} />
                                     </label>
                                     <label>
-                                        Lecturas en el rango
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={draft.rangeCount ?? 3}
-                                            onChange={(e) => setDraft({ ...draft, rangeCount: Number(e.target.value) })}
-                                            placeholder="Ej: 3"
-                                        />
+                                        Cantidad de mediciones
+                                        <input type="number" min={1} value={draft.rangeCount ?? 3} onChange={(e) => setDraft({ ...draft, rangeCount: Number(e.target.value) })} />
                                     </label>
                                 </>
                             )}
 
-                            <div className="actions-row col-span-2">
+                            <div className="actions-row">
                                 <button type="submit">Agregar sensor</button>
-                                <button type="button" className="btn-secondary" onClick={() => setDraft(blankSensor)}>
-                                    Limpiar formulario
-                                </button>
                             </div>
                         </form>
                     </div>
 
                     <div className="card">
-                        <h3>Sensores agregados ({sensors.length})</h3>
-                        {sensors.length === 0 ? (
-                            <p className="muted">Aún no agregas sensores.</p>
-                        ) : (
-                            <ul className="sensor-list">
-                                {sensors.map((s) => (
-                                    <li key={s.id} className="sensor-item">
-                                        <div>
-                                            <b>{s.type.toUpperCase()}</b> · umbral:
-                                            {s.thresholdMin !== undefined ? ` min ${s.thresholdMin}` : ""}
-                                            {s.thresholdMax !== undefined ? ` max ${s.thresholdMax}` : ""}{" "}
-                                            ·{" "}
-                                            {s.scheduleMode === "predefinida" && `Cada ${s.everyHours} h`}
-                                            {s.scheduleMode === "horario" && `Horas: ${s.fixedTimes}`}
-                                            {s.scheduleMode === "rango" && `De ${s.rangeStart} a ${s.rangeEnd} (${s.rangeCount})`}
-                                        </div>
-                                        <button className="btn-danger" onClick={() => removeSensor(s.id)}>
-                                            Eliminar
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
+                        <h2>Sensores agregados ({sensors.length})</h2>
+                        <ul className="sensor-list">
+                            {sensors.map((s) => (
+                                <li key={s.id}>
+                                    <b>{s.type.toUpperCase()}</b>
+                                    {typeof s.thresholdMin === "number" || typeof s.thresholdMax === "number" ? (
+                                        <> &nbsp; • Umbral: min {s.thresholdMin ?? "-"} max {s.thresholdMax ?? "-"}</>
+                                    ) : null}
+                                    <button className="btn-sm" onClick={() => removeSensor(s.id)}>Quitar</button>
+                                </li>
+                            ))}
+                        </ul>
                         <div className="actions-row">
-                            <button onClick={() => finish(true)}>Finalizar y guardar</button>
-                            <button className="btn-secondary" onClick={() => finish(false)}>
-                                Guardar sin sensores
-                            </button>
+                            <button className="btn" onClick={() => finish(true)} disabled={busy}>Finalizar</button>
+                            <button className="btn-secondary" onClick={() => finish(false)} disabled={busy}>Finalizar sin sensores</button>
                         </div>
                     </div>
                 </>
@@ -291,3 +279,4 @@ export default function AddPlant() {
         </section>
     );
 }
+

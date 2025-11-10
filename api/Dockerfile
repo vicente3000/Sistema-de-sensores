@@ -6,7 +6,7 @@ COPY package.json pnpm-lock.yaml* package-lock.json* ./
 RUN if [ -f pnpm-lock.yaml ]; then \
       corepack enable && corepack prepare pnpm@latest --activate && pnpm i --frozen-lockfile --legacy-peer-deps; \
     elif [ -f package-lock.json ]; then \
-      npm ci --legacy-peer-deps; \
+      npm ci --legacy-peer-deps || npm i --legacy-peer-deps; \
     else \
       npm i --legacy-peer-deps; \
     fi
@@ -27,7 +27,7 @@ COPY package.json pnpm-lock.yaml* package-lock.json* ./
 RUN if [ -f pnpm-lock.yaml ]; then \
       corepack enable && corepack prepare pnpm@latest --activate && pnpm i --prod --frozen-lockfile --legacy-peer-deps; \
     elif [ -f package-lock.json ]; then \
-      npm ci --omit=dev --legacy-peer-deps; \
+      npm ci --omit=dev --legacy-peer-deps || npm i --omit=dev --legacy-peer-deps; \
     else \
       npm i --omit=dev --legacy-peer-deps; \
     fi
@@ -38,6 +38,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build     /app/dist         ./dist
 COPY ./src/database/cassandra/init.cql /app/dist/database/cassandra/init.cql
+COPY ./openapi.yaml                      ./openapi.yaml
 COPY --from=deps-prod /app/node_modules ./node_modules
 COPY package.json ./
 EXPOSE 3000

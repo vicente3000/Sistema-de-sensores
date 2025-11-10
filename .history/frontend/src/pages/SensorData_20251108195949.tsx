@@ -16,20 +16,20 @@ import { fetchAgg, fetchDaily } from "../lib/History";
 import { LiveClient, SensorType } from "../lib/RealTime";
 import { Ring, createThrottler } from "../lib/Ring";
 
+// pagina de datos con live + agregados
 export default function SensorData() {
-  const [plants, setPlants] = useState<Array<{ _id: string; name?: string }>>([]);
-  const [sensors, setSensors] = useState<Array<{ _id: string; type: SensorType }>>([]);
-
   const [plant, setPlant] = useState("");
   const [sensor, setSensor] = useState<SensorType | "">("");
   const [step, setStep] = useState<"1m" | "5m" | "1h">("1m");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
+  // rango para agregados
   const [fromAgg, setFromAgg] = useState<string>("");
   const [toAgg, setToAgg] = useState<string>("");
+  // rango diario (dias)
   const [daysDaily, setDaysDaily] = useState<number>(30);
 
+  // live buffer 100 puntos
   const ringRef = useRef(new Ring<{ tsLabel: string; value: number }>(100));
   const [last100, setLast100] = useState(ringRef.current.toArray());
   const renderThrottle = useRef(createThrottler(100));
@@ -38,62 +38,22 @@ export default function SensorData() {
 
   const [agg, setAgg] = useState<Array<{ tsISO: string; avg: number }>>([]);
   const [daily, setDaily] = useState<
-    Array<{ dayISO: string; min: number | null; avg: number | null; max: number | null }>
+    Array<{
+      dayISO: string;
+      min: number | null;
+      avg: number | null;
+      max: number | null;
+    }>
   >([]);
 
-  // ========================
-  // Cargar plantas al inicio
-  // ========================
-  const API_URL = "http://localhost:3000/api/v1";
-  useEffect(() => {
-    const loadPlants = async () => {
-      try {
-        const res = await fetch(`${API_URL}/plants`);
-       const json = await res.json();
-       setPlants(json.data.items); // actualiza el estado existente
-     } catch (err: any) {
-        console.error("Error loading plants:", err);
-      }
-    };
-    loadPlants();
-  }, []);
-
-
-  // ========================
-  // Cargar sensores cuando se selecciona planta
-  // ========================
-  useEffect(() => {
-    if (!plant) {
-      setSensors([]);
-      return;
-    }
-    const loadSensors = async () => {
-      if (!plant) return;
-      try {
-        const res = await fetch(`${API_URL}/plants/${plant}/sensors`);
-        if (!res.ok) throw new Error(`Error fetching sensors: ${res.status}`);
-        const json = await res.json();
-        setSensors(json.data.items); 
-      } catch (e) {
-        console.error("Error loading sensors:", e);
-      }
-    };
-    loadSensors();
-    setSensor("");
-  }, [plant]);
-
-  // ========================
-  // Conectar socket live
-  // ========================
+  // conectar socket
   useEffect(() => {
     liveRef.current = new LiveClient();
     liveRef.current.connect();
     return () => liveRef.current?.disconnect();
   }, []);
 
-  // ========================
-  // Resuscripción live
-  // ========================
+  // resuscripcion live
   useEffect(() => {
     unsubRef.current?.unsubscribe?.();
     ringRef.current.clear();
@@ -115,9 +75,7 @@ export default function SensorData() {
     };
   }, [plant, sensor]);
 
-  // ========================
-  // Agregados por intervalo
-  // ========================
+  // agregados por intervalo
   const loadAgg = async () => {
     if (!plant || !sensor) return;
     try {
@@ -138,9 +96,7 @@ export default function SensorData() {
     }
   };
 
-  // ========================
-  // Resumen diario
-  // ========================
+  // resumen diario
   const loadDaily = async () => {
     if (!plant || !sensor) return;
     try {
@@ -168,10 +124,9 @@ export default function SensorData() {
     <section>
       <h1>Datos de sensores</h1>
 
+      {/* fila superior: 1, 2 y 3 */}
       <div className="filters-row-top">
-        {/* ================== */}
-        {/* Planta dinámicamente */}
-        {/* ================== */}
+        {/* 1) Planta */}
         <div className="fieldset fieldset-small">
           <h3 className="subtitle">1) Planta</h3>
           <p className="note">Selecciona la planta</p>
@@ -185,18 +140,14 @@ export default function SensorData() {
               }}
             >
               <option value="">Selecciona</option>
-              {plants.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.name}
-                </option>
-              ))}
+              <option value="p1">Planta 1</option>
+              <option value="p2">Planta 2</option>
+              <option value="p3">Planta 3</option>
             </select>
           </label>
         </div>
 
-        {/* ================== */}
-        {/* Sensor dinámicamente */}
-        {/* ================== */}
+        {/* 2) Sensor */}
         <div className="fieldset fieldset-small">
           <h3 className="subtitle">2) Sensor</h3>
           <p className="note">Selecciona el tipo de sensor</p>
@@ -208,18 +159,15 @@ export default function SensorData() {
               disabled={!plant}
             >
               <option value="">Selecciona</option>
-              {sensors.map((s) => (
-                <option key={s._id} value={s.type}>
-                  {s.type} ({s._id})
-                </option>
-              ))}
+              <option value="humidity">Humedad</option>
+              <option value="ph">pH</option>
+              <option value="temp">Temperatura</option>
+              <option value="lux">Luminosidad</option>
             </select>
           </label>
         </div>
 
-        {/* ================== */}
-        {/* Promedio por intervalo */}
-        {/* ================== */}
+        {/* 3) Promedio por intervalo */}
         <div className="fieldset fieldset-wide">
           <h3 className="subtitle">3) Promedio por intervalo</h3>
           <p className="note">
@@ -263,16 +211,16 @@ export default function SensorData() {
         </div>
       </div>
 
-      {/* Resumen diario */}
+      {/* fila inferior: 4) resumen diario */}
       <div className="filters-row-bottom">
         <div className="fieldset fieldset-full">
           <h3 className="subtitle">4) Resumen diario</h3>
           <p className="note">
-            Calcula min/avg/max por día para un rango de N días hacia atrás.
+            Calcula min/avg/max por dia para un rango de N dias hacia atras.
           </p>
           <div className="filters-inner">
             <label>
-              Días
+              Dias
               <select
                 value={daysDaily}
                 onChange={(e) => setDaysDaily(Number(e.target.value))}
@@ -293,9 +241,8 @@ export default function SensorData() {
 
       {err && <p className="error">{err}</p>}
 
-      {/* Live Chart */}
       <div className="chart-block">
-        <h2>Últimos 100 valores (live)</h2>
+        <h2>Ultimos 100 valores (live)</h2>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={last100}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -308,7 +255,6 @@ export default function SensorData() {
         </ResponsiveContainer>
       </div>
 
-      {/* Agregados */}
       {agg.length > 0 && (
         <div className="chart-block">
           <h2>Promedio por intervalo ({step})</h2>
@@ -325,7 +271,6 @@ export default function SensorData() {
         </div>
       )}
 
-      {/* Diario */}
       {daily.length > 0 && (
         <div className="chart-block">
           <h2>Diario (min/avg/max)</h2>
@@ -336,9 +281,30 @@ export default function SensorData() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Area type="monotone" dataKey="min" name="Min" fill="#1f6" stroke="#1f6" opacity={0.25} />
-              <Area type="monotone" dataKey="avg" name="Avg" fill="#6cf" stroke="#6cf" opacity={0.25} />
-              <Area type="monotone" dataKey="max" name="Max" fill="#f66" stroke="#f66" opacity={0.25} />
+              <Area
+                type="monotone"
+                dataKey="min"
+                name="Min"
+                fill="#1f6"
+                stroke="#1f6"
+                opacity={0.25}
+              />
+              <Area
+                type="monotone"
+                dataKey="avg"
+                name="Avg"
+                fill="#6cf"
+                stroke="#6cf"
+                opacity={0.25}
+              />
+              <Area
+                type="monotone"
+                dataKey="max"
+                name="Max"
+                fill="#f66"
+                stroke="#f66"
+                opacity={0.25}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
