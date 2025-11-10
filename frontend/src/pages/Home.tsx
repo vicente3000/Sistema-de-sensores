@@ -6,7 +6,7 @@ export default function Home() {
     return (
         <section className="home">
             <img
-                src="public%20/LogoInicio.jpg"
+                src="/LogoInicio.jpg"
                 alt="GreenData Logo"
                 className="home-logo"
             />

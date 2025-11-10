@@ -23,10 +23,10 @@ export default function SensorData() {
   const [step, setStep] = useState<"1m" | "5m" | "1h">("1m");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  // rango para agregados
+  // rango para agregados (por defecto ultima hora)
   const [fromAgg, setFromAgg] = useState<string>("");
   const [toAgg, setToAgg] = useState<string>("");
-  // rango diario (dias)
+  // rango para diario (cantidad de dias)
   const [daysDaily, setDaysDaily] = useState<number>(30);
 
   // live buffer 100 puntos
@@ -36,6 +36,7 @@ export default function SensorData() {
   const liveRef = useRef<LiveClient | null>(null);
   const unsubRef = useRef<null | { unsubscribe: () => void }>(null);
 
+  // series
   const [agg, setAgg] = useState<Array<{ tsISO: string; avg: number }>>([]);
   const [daily, setDaily] = useState<
     Array<{
@@ -75,7 +76,7 @@ export default function SensorData() {
     };
   }, [plant, sensor]);
 
-  // agregados por intervalo
+  // carga agregados por paso
   const loadAgg = async () => {
     if (!plant || !sensor) return;
     try {
@@ -96,7 +97,7 @@ export default function SensorData() {
     }
   };
 
-  // resumen diario
+  // carga agregados diarios
   const loadDaily = async () => {
     if (!plant || !sensor) return;
     try {
@@ -124,14 +125,12 @@ export default function SensorData() {
     <section>
       <h1>Datos de sensores</h1>
 
-      {/* fila superior: 1, 2 y 3 */}
-      <div className="filters-row-top">
+      <div className="filters">
         {/* 1) Planta */}
         <div className="fieldset fieldset-small">
           <h3 className="subtitle">1) Planta</h3>
-          <p className="note">Selecciona la planta</p>
           <label>
-            <span className="label-caption">Planta seleccionada</span>
+            Planta
             <select
               value={plant}
               onChange={(e) => {
@@ -150,9 +149,8 @@ export default function SensorData() {
         {/* 2) Sensor */}
         <div className="fieldset fieldset-small">
           <h3 className="subtitle">2) Sensor</h3>
-          <p className="note">Selecciona el tipo de sensor</p>
           <label>
-            <span className="label-caption">Sensor seleccionado</span>
+            Sensor
             <select
               value={sensor}
               onChange={(e) => setSensor(e.target.value as SensorType)}
@@ -168,13 +166,13 @@ export default function SensorData() {
         </div>
 
         {/* 3) Promedio por intervalo */}
-        <div className="fieldset fieldset-wide">
+        <div className="fieldset" style={{ flex: "1 1 420px" }}>
           <h3 className="subtitle">3) Promedio por intervalo</h3>
           <p className="note">
             Agrupa lecturas por intervalo y calcula promedio. Usa un rango de
             fechas opcional.
           </p>
-          <div className="filters-inner">
+          <div className="filters" style={{ margin: 0 }}>
             <label>
               Intervalo
               <select
@@ -209,16 +207,14 @@ export default function SensorData() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* fila inferior: 4) resumen diario */}
-      <div className="filters-row-bottom">
-        <div className="fieldset fieldset-full">
+        {/* 4) Resumen diario */}
+        <div className="fieldset" style={{ flex: "1 1 320px" }}>
           <h3 className="subtitle">4) Resumen diario</h3>
           <p className="note">
             Calcula min/avg/max por dia para un rango de N dias hacia atras.
           </p>
-          <div className="filters-inner">
+          <div className="filters" style={{ margin: 0 }}>
             <label>
               Dias
               <select
