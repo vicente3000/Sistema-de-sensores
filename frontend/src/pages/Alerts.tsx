@@ -14,7 +14,7 @@ type IncomingAlert = {
     value: number;
     ts: string | number;
     threshold?: { min?: number; max?: number };
-    level?: 'normal'|'grave'|'critica';
+    level?: 'normal' | 'grave' | 'critica';
 };
 
 type UiAlert = {
@@ -55,7 +55,7 @@ export default function Alerts() {
     const [plantOptions, setPlantOptions] = useState<Array<{ id: string; name: string }>>([]);
     const [sensorOptions, setSensorOptions] = useState<Array<{ id: string; type: SensorType }>>([]);
     // cache de nombres de plantas
-    const [plantNames, setPlantNames] = useState<Record<string,string>>({});
+    const [plantNames, setPlantNames] = useState<Record<string, string>>({});
 
     function displayPlant(id: string, fallback?: string) {
         const name = plantNames[id] || fallback || id;
@@ -66,9 +66,9 @@ export default function Alerts() {
     async function ensurePlantNames(ids: string[]) {
         const toFetch = ids.filter(id => !plantNames[id]);
         if (!toFetch.length) return;
-        const updates: Record<string,string> = {};
+        const updates: Record<string, string> = {};
         for (const id of toFetch) {
-            try { const p = await getPlant(id); updates[id] = p.name; } catch {}
+            try { const p = await getPlant(id); updates[id] = p.name; } catch { }
         }
         if (Object.keys(updates).length) setPlantNames(prev => ({ ...prev, ...updates }));
     }
@@ -79,7 +79,7 @@ export default function Alerts() {
             try {
                 const res = await listPlants({ limit: 100 });
                 setPlantOptions(res.items.map((p: any) => ({ id: p._id, name: p.name })));
-            } catch {}
+            } catch { }
         })();
     }, []);
 
@@ -102,7 +102,10 @@ export default function Alerts() {
                 id: r._id,
                 plantId: r.plantId,
                 sensorId: r.sensorId,
-                sensorType: 'humidity',
+                // ==============================================
+                // CORRECCIÓN 1: Usar r.sensorType
+                // ==============================================
+                sensorType: r.sensorType || 'humidity',
                 value: r.value,
                 tsISO: new Date(r.createdAt).toISOString(),
                 level: r.level === 'critica' ? 'red' : 'orange',
@@ -161,7 +164,7 @@ export default function Alerts() {
             <h1>Alertas</h1>
 
             <div className="alerts-toolbar">
-                <span className="badge" style={{opacity: .85}}>Estado Socket: {statusLabel}</span>
+                <span className="badge" style={{ opacity: .85 }}>Estado Socket: {statusLabel}</span>
                 <div className="actions">
                     <label>
                         Max. tarjetas:&nbsp;
@@ -177,7 +180,7 @@ export default function Alerts() {
 
             <p className="alert-meta">
                 Recientes: <b>{counters.total}</b> ·
-                <span className="badge orange" style={{marginLeft:8}}>Naranja {counters.orange}</span>&nbsp;
+                <span className="badge orange" style={{ marginLeft: 8 }}>Naranja {counters.orange}</span>&nbsp;
                 <span className="badge red">Roja {counters.red}</span>
             </p>
 
@@ -208,7 +211,7 @@ export default function Alerts() {
                     <input list="plants-dl" placeholder="nombre o id" value={fPlant} onChange={e => setFPlant(e.target.value)} />
                     <datalist id="plants-dl">
                         {plantOptions.map(p => (
-                            <option key={p.id} value={p.id} label={`${p.name} (${p.id.slice(0,6)}...)`}></option>
+                            <option key={p.id} value={p.id} label={`${p.name} (${p.id.slice(0, 6)}...)`}></option>
                         ))}
                     </datalist>
                 </div>
@@ -217,7 +220,7 @@ export default function Alerts() {
                     <input list="sensors-dl" placeholder="id" value={fSensor} onChange={e => setFSensor(e.target.value)} />
                     <datalist id="sensors-dl">
                         {sensorOptions.map(s => (
-                            <option key={s.id} value={s.id} label={`${s.type.toUpperCase()} (${s.id.slice(0,6)}...)`}></option>
+                            <option key={s.id} value={s.id} label={`${s.type.toUpperCase()} (${s.id.slice(0, 6)}...)`}></option>
                         ))}
                     </datalist>
                 </div>
@@ -253,7 +256,10 @@ export default function Alerts() {
                             id: r._id,
                             plantId: r.plantId,
                             sensorId: r.sensorId,
-                            sensorType: 'humidity',
+                            // ==============================================
+                            // CORRECCIÓN 2: Usar r.sensorType
+                            // ==============================================
+                            sensorType: r.sensorType || 'humidity',
                             value: r.value,
                             tsISO: new Date(r.createdAt).toISOString(),
                             level: r.level === 'critica' ? 'red' : 'orange',
@@ -269,38 +275,38 @@ export default function Alerts() {
 
             <table className="alert-table">
                 <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Planta</th>
-                    <th>Sensor</th>
-                    <th>Nivel</th>
-                    <th>Valor</th>
-                    <th>Umbral</th>
-                </tr>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Planta</th>
+                        <th>Sensor</th>
+                        <th>Nivel</th>
+                        <th>Valor</th>
+                        <th>Umbral</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {rows.slice((page-1)*pageSize, (page-1)*pageSize + pageSize).map(r => (
-                    <tr key={r.id}>
-                        <td>{new Date(r.tsISO).toLocaleString()}</td>
-                        <td>{r.plantId}</td>
-                        <td>{r.sensorId}</td>
-                        <td>{r.level === 'red' ? (<><span className="level-dot level-red"/>Critica</>) : (<><span className="level-dot level-orange"/>Grave</>)}</td>
-                        <td>{r.value.toFixed(2)}</td>
-                        <td>{r.threshold ? `${typeof r.threshold.min==='number' ? 'min '+r.threshold.min : ''} ${typeof r.threshold.max==='number' ? 'max '+r.threshold.max : ''}` : '-'}</td>
-                    </tr>
-                ))}
-                {rows.length === 0 && (
-                    <tr><td colSpan={6} className="alert-meta">Sin resultados</td></tr>
-                )}
+                    {rows.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize).map(r => (
+                        <tr key={r.id}>
+                            <td>{new Date(r.tsISO).toLocaleString()}</td>
+                            <td>{r.plantId}</td>
+                            <td>{r.sensorId}</td>
+                            <td>{r.level === 'red' ? (<><span className="level-dot level-red" />Critica</>) : (<><span className="level-dot level-orange" />Grave</>)}</td>
+                            <td>{r.value.toFixed(2)}</td>
+                            <td>{r.threshold ? `${typeof r.threshold.min === 'number' ? 'min ' + r.threshold.min : ''} ${typeof r.threshold.max === 'number' ? 'max ' + r.threshold.max : ''}` : '-'}</td>
+                        </tr>
+                    ))}
+                    {rows.length === 0 && (
+                        <tr><td colSpan={6} className="alert-meta">Sin resultados</td></tr>
+                    )}
                 </tbody>
             </table>
             <div className="pager">
                 <div>
-                    <button className="btn" disabled={page===1} onClick={() => setPage(p => Math.max(1, p-1))}>Anterior</button>
-                    <button className="btn" disabled={(page*pageSize)>=rows.length} onClick={() => setPage(p => p+1)}>Siguiente</button>
+                    <button className="btn" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Anterior</button>
+                    <button className="btn" disabled={(page * pageSize) >= rows.length} onClick={() => setPage(p => p + 1)}>Siguiente</button>
                 </div>
                 <div>
-                    <span className="muted">Mostrando {(rows.length===0?0:(page-1)*pageSize+1)}-{Math.min(page*pageSize, rows.length)} de {rows.length}</span>
+                    <span className="muted">Mostrando {(rows.length === 0 ? 0 : (page - 1) * pageSize + 1)}-{Math.min(page * pageSize, rows.length)} de {rows.length}</span>
                     &nbsp; · &nbsp;
                     <label>tamano&nbsp;
                         <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
