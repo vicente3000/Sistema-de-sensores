@@ -144,31 +144,11 @@ button:hover {
 
 /* Responsive global */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 12px;
-  }
-  .navbar {
-    padding: 10px 12px;
-  }
-  .navbar nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .navbar nav a {
-    margin-left: 0;
-    padding: 8px 10px;
-    font-size: 0.95rem;
-  }
-  .navbar .right {
-    gap: 8px;
-  }
-  .theme-toggle {
-    width: 34px;
-    height: 34px;
-  }
-  .card-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-  }
+  .container { padding: 0 12px; }
+  .navbar { padding: 10px 12px; }
+  .navbar nav { display:flex; flex-wrap: wrap; gap: 6px; }
+  .navbar nav a { margin-left: 0; padding: 8px 10px; font-size: 0.95rem; }
+  .navbar .right { gap: 8px; }
+  .theme-toggle { width: 34px; height: 34px; }
+  .card-grid { grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 12px; }
 }

@@ -206,44 +206,14 @@ button.btn-sm:hover {
 
 /* Responsive - Alertas */
 @media (max-width: 768px) {
-  .alerts-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .alerts-toolbar .actions {
-    display: flex;
-    gap: 8px;
-    justify-content: space-between;
-  }
-  .alerts-toolbar select {
-    width: auto;
-  }
-  .filters {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .filters .field,
-  .filters .field-group {
-    min-width: unset;
-  }
-  .filters .field label {
-    font-size: 0.9rem;
-  }
-  .alert-list {
-    grid-template-columns: 1fr;
-  }
-  .pager {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .pager > div:first-child {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .pager .btn {
-    width: 100%;
-  }
+  .alerts-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .alerts-toolbar .actions { display: flex; gap: 8px; justify-content: space-between; }
+  .alerts-toolbar select { width: auto; }
+  .filters { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .filters .field, .filters .field-group { min-width: unset; }
+  .filters .field label { font-size: 0.9rem; }
+  .alert-list { grid-template-columns: 1fr; }
+  .pager { flex-direction: column; align-items: stretch; }
+  .pager > div:first-child { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pager .btn { width: 100%; }
 }
