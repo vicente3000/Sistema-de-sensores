@@ -109,6 +109,17 @@ services:
     command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
     restart: unless-stopped
 
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: simulator
+    environment:
+      - API_URL=http://api:3000
+    depends_on:
+      - api
+    restart: always
+
 volumes:
   mongo_data:
   cassandra_data:
