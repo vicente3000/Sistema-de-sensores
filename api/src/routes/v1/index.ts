@@ -10,10 +10,11 @@ import {
   listSensorsByPlant, createSensor, getSensor, updateSensor, deleteSensor,
 } from '../../controllers/sensorController.js';
 import { getThreshold, upsertThreshold, deleteThreshold } from '../../controllers/thresholdController.js';
-import { listAlerts } from '../../controllers/alertController.js';
-import { getSensorHistory } from '../../controllers/historyController.js';
+import { listAlerts, ackAlert } from '../../controllers/alertController.js';
+import { getSensorHistory, getAggregatedHistory, getDailyAggregates } from '../../controllers/historyController.js';
 import { postReading, postReadingsBatch } from '../../controllers/readingController.js';
 import { readingSchema, readingsBatchSchema } from '../../schemas/readingSchemas.js';
+import { historyAggQuery, historyDailyQuery } from '../../schemas/historySchemas.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { alertListQuery } from '../../schemas/alertSchemas.js';
 import rateLimit from 'express-rate-limit';
@@ -36,6 +37,8 @@ router.post('/plants/:plantId([0-9a-fA-F]{24})/sensors', validateBody(sensorCrea
 
 // Histórico (Cassandra) - definir ANTES que rutas con :sensorId para evitar colisión con 'history'
 router.get('/sensors/history', asyncHandler(getSensorHistory));
+router.get('/sensors/history/agg', validateQuery(historyAggQuery), asyncHandler(getAggregatedHistory));
+router.get('/sensors/daily', validateQuery(historyDailyQuery), asyncHandler(getDailyAggregates));
 
 // Ingesta de lecturas (Cassandra)
 const readingsLimiter = rateLimit({ windowMs: 60_000, max: 120 });
@@ -54,5 +57,6 @@ router.delete('/sensors/:sensorId([0-9a-fA-F]{24})/threshold', asyncHandler(dele
 
 // Alertas
 router.get('/alerts', validateQuery(alertListQuery), asyncHandler(listAlerts));
+router.patch('/alerts/:id([0-9a-fA-F]{24})/ack', asyncHandler(ackAlert));
 
 export default router;

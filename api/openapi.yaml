@@ -218,6 +218,53 @@ paths:
           schema: { type: integer }
       responses:
         '200': { description: OK }
+  /sensors/history/agg:
+    get:
+      summary: Aggregated sensor history (fixed step)
+      parameters:
+        - in: query
+          name: plant
+          required: true
+          schema: { type: string }
+        - in: query
+          name: sensor
+          required: true
+          schema:
+            type: string
+            enum: [humidity, ph, temp, lux]
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: step
+          schema: { type: string, enum: ["1m","5m","1h"], default: "1m" }
+      responses:
+        '200': { description: OK }
+  /sensors/daily:
+    get:
+      summary: Daily aggregates (min/avg/max) by day
+      parameters:
+        - in: query
+          name: plant
+          required: true
+          schema: { type: string }
+        - in: query
+          name: sensor
+          required: true
+          schema:
+            type: string
+            enum: [humidity, ph, temp, lux]
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        '200': { description: OK }
   /readings:
     post:
       summary: Insert single reading
