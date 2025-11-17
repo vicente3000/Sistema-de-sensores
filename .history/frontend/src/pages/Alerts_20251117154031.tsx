@@ -175,7 +175,6 @@ export default function Alerts() {
         tsISO: toISO(msg.ts),
         level,
         threshold: msg.threshold,
-        status: (msg as any).status || "pendiente",
       };
       setAlerts((prev) => {
         const next = [ui, ...prev];
@@ -255,53 +254,48 @@ export default function Alerts() {
       </p>
 
       <div className="alert-list">
-        {alerts
-          // Ocultar completadas por defecto; si se desea verlas se usaría la tabla con filtro estado
-          .filter((a) => a.status !== "completado")
-          .map((a) => (
-            <article key={a.id} className={`alert-card alert--${a.level}`}>
-              <h3>
-                {displayPlant(a.plantId, a.plantName)} -{" "}
-                {a.sensorType.toUpperCase()}&nbsp;
-                <span
-                  className={`badge ${a.level === "red" ? "red" : "orange"}`}
-                >
-                  {a.level === "red" ? "Critica" : "Limite"}
-                </span>
-              </h3>
-              <div className="alert-meta">
-                Valor: <b>{a.value.toFixed(2)}</b>
-                &nbsp; · &nbsp; Estado:
-                <select
-                  className={`status-select status-${a.status}`}
-                  value={a.status}
-                  onChange={async (e) => {
-                    const next = e.target.value as UiAlert["status"];
-                    try {
-                      await updateAlertStatus(a.id, next);
-                      setAlerts((prev) =>
-                        prev.map((x) =>
-                          x.id === a.id ? { ...x, status: next } : x
-                        )
-                      );
-                    } catch {}
-                  }}
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="en_progreso">En progreso</option>
-                  <option value="completado">Completado</option>
-                </select>
-                &nbsp; · &nbsp; Umbral:
-                {typeof a.threshold?.min === "number"
-                  ? ` min ${a.threshold.min}`
-                  : ""}
-                {typeof a.threshold?.max === "number"
-                  ? ` max ${a.threshold.max}`
-                  : ""}
-                &nbsp; · &nbsp; {new Date(a.tsISO).toLocaleString()}
-              </div>
-            </article>
-          ))}
+        {alerts.map((a) => (
+          <article key={a.id} className={`alert-card alert--${a.level}`}>
+            <h3>
+              {displayPlant(a.plantId, a.plantName)} -{" "}
+              {a.sensorType.toUpperCase()}&nbsp;
+              <span className={`badge ${a.level === "red" ? "red" : "orange"}`}>
+                {a.level === "red" ? "Critica" : "Limite"}
+              </span>
+            </h3>
+            <div className="alert-meta">
+              Valor: <b>{a.value.toFixed(2)}</b>
+              &nbsp; · &nbsp; Estado:
+              <select
+                className={`status-select status-${a.status}`}
+                value={a.status}
+                onChange={async (e) => {
+                  const next = e.target.value as UiAlert["status"];
+                  try {
+                    await updateAlertStatus(a.id, next);
+                    setAlerts((prev) =>
+                      prev.map((x) =>
+                        x.id === a.id ? { ...x, status: next } : x
+                      )
+                    );
+                  } catch {}
+                }}
+              >
+                <option value="pendiente">Pendiente</option>
+                <option value="en_progreso">En progreso</option>
+                <option value="completado">Completado</option>
+              </select>
+              &nbsp; · &nbsp; Umbral:
+              {typeof a.threshold?.min === "number"
+                ? ` min ${a.threshold.min}`
+                : ""}
+              {typeof a.threshold?.max === "number"
+                ? ` max ${a.threshold.max}`
+                : ""}
+              &nbsp; · &nbsp; {new Date(a.tsISO).toLocaleString()}
+            </div>
+          </article>
+        ))}
       </div>
 
       {/* filtros y tabla de alertas */}

@@ -1,13 +1,13 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IAlert extends Document {
   plantId: Types.ObjectId;
   sensorId: Types.ObjectId;
   value: number;
   message?: string;
-  level: "normal" | "grave" | "critica";
+  level: 'normal' | 'grave' | 'critica';
   // nuevo flujo de estado
-  status: "pendiente" | "en_progreso" | "completado";
+  status: 'pendiente' | 'en_progreso' | 'completado';
   acked?: boolean; // legado
   resolvedBy?: string; // legado
   ackedAt?: Date; // legado
@@ -15,26 +15,16 @@ export interface IAlert extends Document {
 }
 
 const alertSchema = new Schema<IAlert>({
-  plantId: { type: Schema.Types.ObjectId, ref: "Plant", required: true },
-  sensorId: { type: Schema.Types.ObjectId, ref: "Sensor", required: true },
+  plantId: { type: Schema.Types.ObjectId, ref: 'Plant', required: true },
+  sensorId: { type: Schema.Types.ObjectId, ref: 'Sensor', required: true },
   value: { type: Number, required: true },
   message: { type: String },
-  level: {
-    type: String,
-    enum: ["normal", "grave", "critica"],
-    default: "normal",
-    index: true,
-  },
-  status: {
-    type: String,
-    enum: ["pendiente", "en_progreso", "completado"],
-    default: "pendiente",
-    index: true,
-  },
+  level: { type: String, enum: ['normal', 'grave', 'critica'], default: 'normal', index: true },
+  status: { type: String, enum: ['pendiente', 'en_progreso', 'completado'], default: 'pendiente', index: true },
   acked: { type: Boolean, default: false },
   resolvedBy: { type: String },
   ackedAt: { type: Date },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
 alertSchema.index({ plantId: 1, createdAt: -1 });
@@ -54,4 +44,4 @@ if (ttlSeconds > 0) {
   alertSchema.index({ createdAt: 1 }, { expireAfterSeconds: ttlSeconds });
 }
 
-export const Alert = model<IAlert>("Alert", alertSchema);
+export const Alert = model<IAlert>('Alert', alertSchema);

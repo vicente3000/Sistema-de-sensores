@@ -34,9 +34,9 @@ export type AlertStatus = "pendiente" | "en_progreso" | "completado";
 // de lo contrario usamos 'http://api:3000'.
 const API_BASE =
   (import.meta as any).env?.VITE_API_BASE_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : "http://api:3000");
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'http://api:3000');
 const v1 = (p: string) => `${API_BASE}/api/v1${p}`;
 
 async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {

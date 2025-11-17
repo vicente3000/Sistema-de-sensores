@@ -29,14 +29,8 @@ export type AlertDoc = {
 };
 export type AlertStatus = "pendiente" | "en_progreso" | "completado";
 
-// Fallback inteligente: dentro de Docker el hostname correcto suele ser 'api'
-// Si no hay VITE_API_BASE_URL y estamos en localhost (desarrollo fuera de contenedores) usamos localhost,
-// de lo contrario usamos 'http://api:3000'.
 const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : "http://api:3000");
+  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
 const v1 = (p: string) => `${API_BASE}/api/v1${p}`;
 
 async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {

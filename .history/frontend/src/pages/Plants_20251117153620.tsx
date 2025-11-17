@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPlant } from "../lib/Api";
 import { ConfirmModal } from "../components/ConfirmModal";
 import "../css/Plants.css";
 import {
-  createPlant,
   createSensor,
   deletePlant,
   deleteSensor,
@@ -35,12 +35,7 @@ export default function Plants() {
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("");
   const [creating, setCreating] = useState(false);
-  const [confirm, setConfirm] = useState<{
-    open: boolean;
-    type: "plant" | "sensor";
-    plantId?: string;
-    sensorId?: string;
-  }>({ open: false, type: "plant" });
+  const [confirm, setConfirm] = useState<{ open: boolean; type: 'plant' | 'sensor'; plantId?: string; sensorId?: string }>{ open: false, type: 'plant' };
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("");
@@ -135,7 +130,7 @@ export default function Plants() {
   };
 
   const removeSensor = (plantId: string, sensorId: string) => {
-    setConfirm({ open: true, type: "sensor", plantId, sensorId });
+    setConfirm({ open: true, type: 'sensor', plantId, sensorId });
   };
 
   const addSensor = async (plantId: string) => {
@@ -201,28 +196,22 @@ export default function Plants() {
   };
 
   const removePlant = (id: string) => {
-    setConfirm({ open: true, type: "plant", plantId: id });
+    setConfirm({ open: true, type: 'plant', plantId: id });
   };
 
   const handleConfirm = async () => {
     const { type, plantId, sensorId } = confirm;
     setConfirm({ ...confirm, open: false });
     try {
-      if (type === "plant" && plantId) {
+      if (type === 'plant' && plantId) {
         await deletePlant(plantId);
-        setPlants((prev) => prev.filter((p) => p.id !== plantId));
+        setPlants(prev => prev.filter(p => p.id !== plantId));
         if (editingId === plantId) cancelEdit();
-        setMsg("Planta eliminada");
-      } else if (type === "sensor" && plantId && sensorId) {
+        setMsg('Planta eliminada');
+      } else if (type === 'sensor' && plantId && sensorId) {
         await deleteSensor(sensorId);
-        setPlants((prev) =>
-          prev.map((p) =>
-            p.id === plantId
-              ? { ...p, sensors: p.sensors.filter((s) => s.id !== sensorId) }
-              : p
-          )
-        );
-        setMsg("Sensor eliminado");
+        setPlants(prev => prev.map(p => p.id === plantId ? { ...p, sensors: p.sensors.filter(s => s.id !== sensorId) } : p));
+        setMsg('Sensor eliminado');
       }
     } catch (e: any) {
       setMsg(`Error: ${e.message ?? String(e)}`);
@@ -236,28 +225,13 @@ export default function Plants() {
     if (!newName.trim()) return;
     try {
       setCreating(true);
-      const created = await createPlant({
-        name: newName.trim(),
-        type: newType.trim() || undefined,
-      });
-      setPlants((prev) => [
-        {
-          id: created._id,
-          name: created.name,
-          type: created.type,
-          createdAt: created.createdAt,
-          sensors: [],
-        },
-        ...prev,
-      ]);
+      const created = await createPlant({ name: newName.trim(), type: newType.trim() || undefined });
+      setPlants(prev => [{ id: created._id, name: created.name, type: created.type, createdAt: created.createdAt, sensors: [] }, ...prev]);
       setMsg("Planta creada");
-      setNewName("");
-      setNewType("");
+      setNewName(""); setNewType("");
     } catch (e: any) {
       setMsg(`Error creando planta: ${e.message ?? String(e)}`);
-    } finally {
-      setCreating(false);
-    }
+    } finally { setCreating(false); }
   };
 
   return (
@@ -266,15 +240,7 @@ export default function Plants() {
       {msg && <p className="muted">{msg}</p>}
 
       <div className="plants-toolbar">
-        <form
-          onSubmit={createPlantInline}
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
+        <form onSubmit={createPlantInline} style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
           <input
             className="search"
             placeholder="Nombre nueva planta"
@@ -284,26 +250,20 @@ export default function Plants() {
           />
           <input
             className="search"
-            style={{ maxWidth: 240 }}
+            style={{ maxWidth:240 }}
             placeholder="Tipo (opcional)"
             value={newType}
             onChange={(e) => setNewType(e.target.value)}
             disabled={creating}
           />
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={creating || !newName.trim()}
-          >
-            Agregar planta
-          </button>
+          <button type="submit" className="btn-primary" disabled={creating || !newName.trim()}>Agregar planta</button>
         </form>
         <input
           className="search"
           placeholder="Buscar por nombre o tipo…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1 }}
+          style={{ flex:1 }}
         />
       </div>
 
@@ -551,12 +511,8 @@ export default function Plants() {
       )}
       <ConfirmModal
         open={confirm.open}
-        title={confirm.type === "plant" ? "Eliminar planta" : "Eliminar sensor"}
-        message={
-          confirm.type === "plant"
-            ? "¿Seguro que quieres eliminar esta planta? Esto también elimina sus sensores y umbrales."
-            : "¿Seguro que quieres eliminar este sensor y su umbral asociado?"
-        }
+        title={confirm.type === 'plant' ? 'Eliminar planta' : 'Eliminar sensor'}
+        message={confirm.type === 'plant' ? '¿Seguro que quieres eliminar esta planta? Esto también elimina sus sensores y umbrales.' : '¿Seguro que quieres eliminar este sensor y su umbral asociado?'}
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         onConfirm={handleConfirm}
