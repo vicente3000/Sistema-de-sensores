@@ -65,9 +65,7 @@
   padding: 12px 16px;
 }
 
-.plant-row + .plant-row {
-  border-top: 1px solid var(--border);
-}
+.plant-row + .plant-row { border-top: 1px solid var(--border); }
 
 .plant-row-name {
   display: flex;

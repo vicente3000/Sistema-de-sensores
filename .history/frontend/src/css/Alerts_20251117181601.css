@@ -109,8 +109,8 @@
 button.btn-sm {
   padding: 6px 10px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid #26303b;
+  background: #0f141a;
   color: var(--fg);
   cursor: pointer;
 }

@@ -20,11 +20,11 @@ paths:
           name: offset
           schema: { type: integer, minimum: 0, default: 0 }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkPlantList" }
+              schema: { $ref: '#/components/schemas/ApiOkPlantList' }
               examples:
                 ok:
                   value:
@@ -44,13 +44,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PlantCreate"
+              $ref: '#/components/schemas/PlantCreate'
       responses:
-        "201":
+        '201':
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkPlant" }
+              schema: { $ref: '#/components/schemas/ApiOkPlant' }
               examples:
                 created:
                   value:
@@ -59,7 +59,7 @@ paths:
                       name: "Albahaca"
                       type: "Ocimum basilicum"
                       createdAt: "2025-11-01T12:00:00.000Z"
-        "400": { $ref: "#/components/responses/BadRequest" }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /plants/{id}:
     get:
       summary: Get plant
@@ -69,12 +69,12 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkPlant" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkPlant' }
+        '404': { $ref: '#/components/responses/NotFound' }
     patch:
       summary: Update plant
       parameters:
@@ -87,14 +87,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PlantUpdate"
+              $ref: '#/components/schemas/PlantUpdate'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkPlant" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkPlant' }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
       summary: Delete plant
       parameters:
@@ -103,8 +103,8 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200": { $ref: "#/components/responses/OkDeleted" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '200': { $ref: '#/components/responses/OkDeleted' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /plants/{plantId}/sensors:
     get:
       summary: List sensors for plant
@@ -123,12 +123,12 @@ paths:
           name: offset
           schema: { type: integer, minimum: 0, default: 0 }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkSensorList" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkSensorList' }
+        '404': { $ref: '#/components/responses/NotFound' }
     post:
       summary: Create sensor for plant
       parameters:
@@ -141,15 +141,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SensorCreate"
+              $ref: '#/components/schemas/SensorCreate'
       responses:
-        "201":
+        '201':
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkSensor" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkSensor' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /sensors/{sensorId}:
     get:
       summary: Get sensor
@@ -159,12 +159,12 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkSensor" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkSensor' }
+        '404': { $ref: '#/components/responses/NotFound' }
     patch:
       summary: Update sensor
       parameters:
@@ -177,14 +177,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SensorUpdate"
+              $ref: '#/components/schemas/SensorUpdate'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkSensor" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkSensor' }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
       summary: Delete sensor
       parameters:
@@ -193,8 +193,8 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200": { $ref: "#/components/responses/OkDeleted" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '200': { $ref: '#/components/responses/OkDeleted' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /sensors/{sensorId}/threshold:
     get:
       summary: Get threshold
@@ -204,12 +204,12 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkThreshold" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkThreshold' }
+        '404': { $ref: '#/components/responses/NotFound' }
     put:
       summary: Upsert threshold
       parameters:
@@ -222,13 +222,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Threshold"
+              $ref: '#/components/schemas/Threshold'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkThreshold" }
+              schema: { $ref: '#/components/schemas/ApiOkThreshold' }
     delete:
       summary: Delete threshold
       parameters:
@@ -237,7 +237,7 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200": { $ref: "#/components/responses/OkDeleted" }
+        '200': { $ref: '#/components/responses/OkDeleted' }
   /alerts:
     get:
       summary: List alerts
@@ -264,11 +264,11 @@ paths:
           name: status
           schema: { type: string, enum: [pendiente, en_progreso, completado] }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkAlertList" }
+              schema: { $ref: '#/components/schemas/ApiOkAlertList' }
   /alerts/{id}/status:
     patch:
       summary: Update alert status
@@ -289,13 +289,13 @@ paths:
                   type: string
                   enum: [pendiente, en_progreso, completado]
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkAlert" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkAlert' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /alerts/{id}/ack:
     patch:
       summary: Acknowledge alert (sets status to completado)
@@ -313,12 +313,12 @@ paths:
               properties:
                 by: { type: string, description: User identifier }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkAlert" }
-        "404": { $ref: "#/components/responses/NotFound" }
+              schema: { $ref: '#/components/schemas/ApiOkAlert' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /sensors/history:
     get:
       summary: Sensor history
@@ -346,12 +346,12 @@ paths:
           name: maxPoints
           schema: { type: integer }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkHistorySeries" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+              schema: { $ref: '#/components/schemas/ApiOkHistorySeries' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /sensors/history/agg:
     get:
       summary: Aggregated sensor history (fixed step)
@@ -374,14 +374,14 @@ paths:
           schema: { type: string, format: date-time }
         - in: query
           name: step
-          schema: { type: string, enum: ["1m", "5m", "1h"], default: "1m" }
+          schema: { type: string, enum: ["1m","5m","1h"], default: "1m" }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkAggSeries" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+              schema: { $ref: '#/components/schemas/ApiOkAggSeries' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /sensors/daily:
     get:
       summary: Daily aggregates (min/avg/max) by day
@@ -403,12 +403,12 @@ paths:
           name: to
           schema: { type: string, format: date-time }
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkDailyAggregates" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+              schema: { $ref: '#/components/schemas/ApiOkDailyAggregates' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /readings:
     post:
       summary: Insert single reading
@@ -417,15 +417,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Reading"
+              $ref: '#/components/schemas/Reading'
       responses:
-        "201":
+        '201':
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkInserted" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "429": { $ref: "#/components/responses/TooManyRequests" }
+              schema: { $ref: '#/components/schemas/ApiOkInserted' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /readings/batch:
     post:
       summary: Insert batch of readings
@@ -439,20 +439,20 @@ paths:
                 readings:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Reading"
+                    $ref: '#/components/schemas/Reading'
       responses:
-        "201":
+        '201':
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ApiOkInserted" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "429": { $ref: "#/components/responses/TooManyRequests" }
+              schema: { $ref: '#/components/schemas/ApiOkInserted' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /health:
     get:
       summary: Health (dependencies)
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -461,13 +461,12 @@ paths:
                 properties:
                   ok: { type: boolean }
                   mongo: { type: object, properties: { ok: { type: boolean } } }
-                  cassandra:
-                    { type: object, properties: { ok: { type: boolean } } }
+                  cassandra: { type: object, properties: { ok: { type: boolean } } }
   /health/live:
     get:
       summary: Liveness
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -476,7 +475,7 @@ paths:
     get:
       summary: Readiness
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -485,13 +484,12 @@ paths:
                 properties:
                   ok: { type: boolean }
                   mongo: { type: object, properties: { ok: { type: boolean } } }
-                  cassandra:
-                    { type: object, properties: { ok: { type: boolean } } }
+                  cassandra: { type: object, properties: { ok: { type: boolean } } }
   /metrics:
     get:
       summary: Prometheus metrics
       responses:
-        "200":
+        '200':
           description: OK (text/plain; OpenMetrics format)
           content:
             text/plain:
@@ -520,14 +518,14 @@ components:
           properties:
             items:
               type: array
-              items: { $ref: "#/components/schemas/Plant" }
+              items: { $ref: '#/components/schemas/Plant' }
             total: { type: integer }
             limit: { type: integer }
             offset: { type: integer }
     ApiOkPlant:
       type: object
       properties:
-        data: { $ref: "#/components/schemas/Plant" }
+        data: { $ref: '#/components/schemas/Plant' }
     ApiOkSensorList:
       type: object
       properties:
@@ -536,49 +534,49 @@ components:
           properties:
             items:
               type: array
-              items: { $ref: "#/components/schemas/Sensor" }
+              items: { $ref: '#/components/schemas/Sensor' }
             total: { type: integer }
             limit: { type: integer }
             offset: { type: integer }
     ApiOkSensor:
       type: object
       properties:
-        data: { $ref: "#/components/schemas/Sensor" }
+        data: { $ref: '#/components/schemas/Sensor' }
     ApiOkThreshold:
       type: object
       properties:
         data:
           anyOf:
-            - $ref: "#/components/schemas/Threshold"
-            - type: "null"
+            - $ref: '#/components/schemas/Threshold'
+            - type: 'null'
     ApiOkAlertList:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: "#/components/schemas/Alert" }
+          items: { $ref: '#/components/schemas/Alert' }
     ApiOkAlert:
       type: object
       properties:
-        data: { $ref: "#/components/schemas/Alert" }
+        data: { $ref: '#/components/schemas/Alert' }
     ApiOkHistorySeries:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: "#/components/schemas/HistoryPoint" }
+          items: { $ref: '#/components/schemas/HistoryPoint' }
     ApiOkAggSeries:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: "#/components/schemas/AggPoint" }
+          items: { $ref: '#/components/schemas/AggPoint' }
     ApiOkDailyAggregates:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: "#/components/schemas/DailyAggregate" }
+          items: { $ref: '#/components/schemas/DailyAggregate' }
     PlantCreate:
       type: object
       required: [name]
@@ -669,26 +667,26 @@ components:
       description: Bad Request
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/ApiError" }
+          schema: { $ref: '#/components/schemas/ApiError' }
           examples:
             bad:
-              value: { error: "Invalid sensorId" }
+              value: { error: 'Invalid sensorId' }
     NotFound:
       description: Not Found
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/ApiError" }
+          schema: { $ref: '#/components/schemas/ApiError' }
           examples:
             nf:
-              value: { error: "Alert not found" }
+              value: { error: 'Alert not found' }
     TooManyRequests:
       description: Too Many Requests
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/ApiError" }
+          schema: { $ref: '#/components/schemas/ApiError' }
           examples:
             rate:
-              value: { error: "Too many requests, please try again later." }
+              value: { error: 'Too many requests, please try again later.' }
     OkDeleted:
       description: OK
       content:

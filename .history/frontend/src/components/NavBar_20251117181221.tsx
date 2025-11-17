@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function NavBar() {
   const getInitialTheme = (): "light" | "dark" => {
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") return saved;
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? "dark" : "light";
   };
 
@@ -36,9 +34,7 @@ export default function NavBar() {
         <button
           className="theme-toggle"
           title={theme === "dark" ? "Cambiar a claro" : "Cambiar a oscuro"}
-          aria-label={
-            theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"
-          }
+          aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
           onClick={toggleTheme}
         >
           {theme === "dark" ? "☀️" : "🌙"}

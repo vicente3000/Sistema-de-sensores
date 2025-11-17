@@ -1,9 +1,9 @@
-import express from "express";
-import mongoose from "mongoose";
 import request from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { connectMongo } from "../database/mongoDB/config.js";
+import express from "express";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import plantRoute from "../routes/plantRoute.js";
+import { connectMongo } from "../database/mongoDB/config.js";
+import mongoose from "mongoose";
 
 // Crear app temporal para test
 const app = express();
@@ -12,7 +12,7 @@ app.use("/plants", plantRoute);
 
 beforeAll(async () => {
   // Aislar BD para evitar interferencias entre suites
-  process.env.MONGO_URI = "mongodb://localhost:27017/greendata_test_plant";
+  process.env.MONGO_URI = 'mongodb://localhost:27017/greendata_test_plant';
   await connectMongo();
 });
 

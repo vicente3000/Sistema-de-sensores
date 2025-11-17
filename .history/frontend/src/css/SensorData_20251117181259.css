@@ -19,11 +19,7 @@
   margin: 0;
 }
 
-.sensor-subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
+.sensor-subtitle { margin-top: 0.25rem; font-size: 0.9rem; color: var(--muted); }
 
 /* Barra de busqueda */
 
@@ -42,9 +38,7 @@
   font-size: 0.95rem;
 }
 
-.sensor-search-input::placeholder {
-  color: var(--muted);
-}
+.sensor-search-input::placeholder { color: var(--muted); }
 
 .sensor-search-input:focus {
   outline: none;
@@ -69,10 +63,7 @@
   min-width: 150px;
 }
 
-.sensor-filter-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
+.sensor-filter-label { font-size: 0.8rem; color: var(--muted); }
 
 .sensor-filter-select {
   height: 2.5rem;
