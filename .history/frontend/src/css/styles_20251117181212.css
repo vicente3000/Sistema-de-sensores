@@ -1,0 +1,137 @@
+:root,
+[data-theme="light"] {
+    --bg:#f7fafc;        /* Fondo principal */
+    --fg:#0b1320;        /* Texto principal */
+    --muted:#5b728a;     /* Texto secundario */
+    --card:#ffffff;      /* Fondo de tarjetas y nav */
+    --surface:#f2f5f9;   /* Controles, inputs */
+    --surface-2:#e9eef5; /* Bloques alternos */
+    --border:#d3dbe6;    /* Borde suave */
+    --accent:#0ea5e9;    /* Color de acento */
+}
+
+[data-theme="dark"] {
+    --bg:#0b0f13;        /* Fondo principal */
+    --fg:#e8f0f7;        /* Texto principal */
+    --muted:#9db2c7;     /* Texto secundario */
+    --card:#121821;      /* Fondo de tarjetas y nav */
+    --surface:#0f141a;   /* Controles, inputs */
+    --surface-2:#050814; /* Bloques alternos */
+    --border:#1e2630;    /* Borde */
+    --accent:#7dd386;    /* Color de acento */
+}
+
+/* Configuración global */
+* { box-sizing: border-box; }
+body {
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:system-ui, sans-serif;
+}
+a { color:inherit; text-decoration:none; }
+.container {
+    max-width:1000px;
+    margin:20px auto;
+    padding:0 16px;
+}
+
+/* Barra de navegación */
+.navbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    background:color-mix(in oklab, var(--bg) 85%, transparent);
+    backdrop-filter: blur(8px);
+}
+.brand {
+    font-weight:700;
+    letter-spacing:.5px;
+}
+.navbar nav a {
+    margin-left:16px;
+    padding:8px 10px;
+    border-radius:10px;
+}
+.navbar nav a.active {
+    background:var(--card);
+    border:1px solid var(--border);
+}
+
+/* Tarjetas en cuadrícula (Home) */
+.card-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:16px;
+    padding:24px 0;
+}
+.card {
+    background:var(--card);
+    border:1px solid var(--border);
+    padding:18px;
+    border-radius:16px;
+    transition: transform .12s ease, border-color .12s;
+}
+.card:hover {
+    transform: translateY(-2px);
+    border-color:color-mix(in oklab, var(--border), transparent 40%);
+}
+.card h2 {
+    margin:0 0 8px;
+    color:var(--accent);
+}
+.card p {
+    color:var(--muted);
+    margin:0;
+}
+
+/*Formularios */
+.form {
+    display:grid;
+    gap:12px;
+    max-width:420px;
+    margin-top:12px;
+}
+input, button {
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--fg);
+}
+button {
+    background:var(--accent);
+    color:#07220e;
+    border: none;
+    font-weight:600;
+    cursor:pointer;
+}
+button:hover {
+    filter:brightness(.95);
+}
+
+/* Toggle de tema */
+.theme-toggle {
+    margin-left:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--fg);
+    cursor:pointer;
+}
+.theme-toggle:hover {
+    filter:brightness(.97);
+}
+.navbar .right {
+    display:flex;
+    align-items:center;
+}
