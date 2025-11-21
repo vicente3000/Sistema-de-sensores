@@ -357,8 +357,8 @@ export default function Plants() {
                     addSensor(editingPlant.id);
                   }}
                 >
-                  <label className="inline-field">
-                    <span>Tipo:</span>
+                  <label>
+                    Tipo
                     <select
                       value={sensorDraft.type}
                       onChange={(e) =>
@@ -377,6 +377,9 @@ export default function Plants() {
                     </button>
                   </div>
                 </form>
+                <p className="muted" style={{ marginTop: 8 }}>
+                  Los umbrales se crean en 0 y puedes editarlos abajo.
+                </p>
               </section>
 
               <section className="subcard col-span-2">
@@ -385,17 +388,7 @@ export default function Plants() {
                   {editingPlant.sensors.map((s) => (
                     <li key={s.id} className="sensor-item">
                       <div>
-                        <b>
-                          {s.type === "humidity"
-                            ? "HUMEDAD"
-                            : s.type === "temp"
-                            ? "TEMPERATURA"
-                            : s.type === "ph"
-                            ? "PH"
-                            : s.type === "lux"
-                            ? "LUMINOSIDAD"
-                            : s.type.toUpperCase()}
-                        </b>
+                        <b>{s.type.toUpperCase()}</b>
                       </div>
                       <div className="sensor-controls">
                         <span className="muted">min</span>

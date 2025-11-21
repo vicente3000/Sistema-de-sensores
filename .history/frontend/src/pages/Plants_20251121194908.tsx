@@ -385,17 +385,7 @@ export default function Plants() {
                   {editingPlant.sensors.map((s) => (
                     <li key={s.id} className="sensor-item">
                       <div>
-                        <b>
-                          {s.type === "humidity"
-                            ? "HUMEDAD"
-                            : s.type === "temp"
-                            ? "TEMPERATURA"
-                            : s.type === "ph"
-                            ? "PH"
-                            : s.type === "lux"
-                            ? "LUMINOSIDAD"
-                            : s.type.toUpperCase()}
-                        </b>
+                        <b>{s.type.toUpperCase()}</b>
                       </div>
                       <div className="sensor-controls">
                         <span className="muted">min</span>
