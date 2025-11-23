@@ -119,6 +119,9 @@ services:
     depends_on:
       - api
     restart: always
+    volumes:
+      - ./simulator/simulator_speed.json:/app/simulator_speed.json:ro
+
 
 volumes:
   mongo_data:

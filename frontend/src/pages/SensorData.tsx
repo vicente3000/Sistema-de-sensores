@@ -11,7 +11,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
 import "../css/SensorData.css";
+
 import { fetchAgg, fetchDaily } from "../lib/History";
 import { LiveClient, SensorType } from "../lib/RealTime";
 import { Ring, createThrottler } from "../lib/Ring";
@@ -24,39 +26,40 @@ const SENSOR_LABEL: Record<SensorType, string> = {
 };
 
 export default function SensorData() {
-  const [plants, setPlants] = useState<Array<{ _id: string; name?: string }>>(
-    []
-  );
-  const [sensors, setSensors] = useState<
-    Array<{ _id: string; type: SensorType }>
-  >([]);
+  const [plants, setPlants] = useState<Array<{ _id: string; name?: string }>>([]);
+  const [sensors, setSensors] = useState<Array<{ _id: string; type: SensorType }>>([]);
 
   const [plant, setPlant] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sensor, setSensor] = useState<SensorType | "">("");
   const [step, setStep] = useState<"1m" | "5m" | "1h">("1m");
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [fromAgg, setFromAgg] = useState<string>("");
-  const [toAgg, setToAgg] = useState<string>("");
-  const [daysDaily, setDaysDaily] = useState<number>(30);
+  const [fromAgg, setFromAgg] = useState("");
+  const [toAgg, setToAgg] = useState("");
+  const [daysDaily, setDaysDaily] = useState(30);
 
-  const ringRef = useRef(new Ring<{ tsLabel: string; value: number }>(100));
-  const [last100, setLast100] = useState(ringRef.current.toArray());
-  const renderThrottle = useRef(createThrottler(100));
+  // MODO DE VISUALIZACIÓN: live | historical
+  const [mode, setMode] = useState<"live" | "historical">("live");
+
+  const opId = useRef(0);
+
+  const ringsRef = useRef<Record<SensorType, Ring<{ tsLabel: string; value: number }>>>({});
+  const [last100Map, setLast100Map] = useState<Record<SensorType, any[]>>({});
+
   const liveRef = useRef<LiveClient | null>(null);
-  const unsubRef = useRef<null | { unsubscribe: () => void }>(null);
+  const unsubRef = useRef<Record<SensorType, { unsubscribe: () => void } | null>>({});
 
-  const [agg, setAgg] = useState<Array<{ tsISO: string; avg: number }>>([]);
+  const [agg, setAgg] = useState<Record<SensorType, Array<{ tsISO: string; avg: number }>>>({});
   const [daily, setDaily] = useState<
-    Array<{
-      dayISO: string;
-      min: number | null;
-      avg: number | null;
-      max: number | null;
-    }>
-  >([]);
+    Record<
+      SensorType,
+      Array<{ dayISO: string; min: number | null; avg: number | null; max: number | null }>
+    >
+  >({});
+
+  const renderThrottle = useRef(createThrottler(100));
 
   const API_URL = "http://localhost:3000/api/v1";
 
@@ -67,116 +70,160 @@ export default function SensorData() {
         const res = await fetch(`${API_URL}/plants`);
         const json = await res.json();
         setPlants(json.data.items);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error loading plants:", err);
       }
     };
     loadPlants();
   }, []);
 
-  // Cargar sensores cuando cambia la planta
+  // Cargar sensores cuando cambia planta
   useEffect(() => {
     if (!plant) {
       setSensors([]);
-      setSensor("");
       return;
     }
+
     const loadSensors = async () => {
       try {
         const res = await fetch(`${API_URL}/plants/${plant}/sensors`);
-        if (!res.ok) throw new Error(`Error fetching sensors: ${res.status}`);
         const json = await res.json();
         setSensors(json.data.items);
-      } catch (e) {
-        console.error("Error loading sensors:", e);
+      } catch (err) {
+        console.error("Error loading sensors:", err);
       }
     };
     loadSensors();
-    setSensor("");
   }, [plant]);
 
-  // Conectar socket live
+  // Conectar socket
   useEffect(() => {
     liveRef.current = new LiveClient();
     liveRef.current.connect();
     return () => liveRef.current?.disconnect();
   }, []);
 
-  // Resuscripción live cuando cambian planta o sensor
+  // Suscripciones LIVE solo si el modo es live
   useEffect(() => {
-    unsubRef.current?.unsubscribe?.();
-    ringRef.current.clear();
-    setLast100([]);
+    opId.current++;
+
+    // cancelar subs anteriores
+    Object.values(unsubRef.current).forEach((u) => u?.unsubscribe());
+    unsubRef.current = {};
+    ringsRef.current = {};
+    setLast100Map({});
     setErr(null);
 
-    if (!plant || !sensor) return;
+    if (!plant || sensors.length === 0 || mode !== "live") return;
 
-    const s = liveRef.current!;
-    unsubRef.current = s.subscribe(plant, sensor as SensorType, (p) => {
-      const tsLabel = new Date(p.tsISO).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
+    const myOp = opId.current;
+    const client = liveRef.current!;
+
+    sensors.forEach((s) => {
+      const t = s.type;
+
+      ringsRef.current[t] = new Ring(100);
+
+      unsubRef.current[t] = client.subscribe(plant, t, (p) => {
+        if (myOp !== opId.current) return;
+
+        const tsLabel = new Date(p.tsISO).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        ringsRef.current[t].push({ tsLabel, value: p.value });
+
+        renderThrottle.current(() => {
+          if (myOp !== opId.current) return;
+
+          const map: any = {};
+          (Object.keys(ringsRef.current) as SensorType[]).forEach((k) => {
+            map[k] = ringsRef.current[k].toArray();
+          });
+          setLast100Map(map);
+        });
       });
-      ringRef.current.push({ tsLabel, value: p.value });
-      renderThrottle.current(() => setLast100(ringRef.current.toArray()));
     });
 
     return () => {
-      unsubRef.current?.unsubscribe?.();
-      unsubRef.current = null;
+      Object.values(unsubRef.current).forEach((u) => u?.unsubscribe());
+      unsubRef.current = {};
     };
-  }, [plant, sensor]);
+  }, [plant, sensors, mode]);
 
-  // Agregados por intervalo
-  const loadAgg = async () => {
-    if (!plant || !sensor) return;
-    try {
-      setLoading(true);
-      setErr(null);
+  // Carga histórica
+  const loadAllAgg = async () => {
+    const myOp = opId.current;
+
+    const tasks = sensors.map(async (s) => {
       const rows = await fetchAgg({
         plant,
-        sensor: sensor as SensorType,
+        sensor: s.type,
         step,
         from: fromAgg || undefined,
         to: toAgg || undefined,
       });
-      setAgg(rows.map((r) => ({ tsISO: r.tsISO, avg: r.avg })));
-    } catch (e: any) {
-      setErr(e.message ?? String(e));
-    } finally {
-      setLoading(false);
-    }
+      return { type: s.type, rows };
+    });
+
+    const arr = await Promise.all(tasks);
+    if (myOp !== opId.current) return;
+
+    const obj: any = {};
+    arr.forEach(({ type, rows }) => {
+      obj[type] = rows;
+    });
+    setAgg(obj);
   };
 
-  // Resumen diario
-  const loadDaily = async () => {
-    if (!plant || !sensor) return;
-    try {
-      setLoading(true);
-      setErr(null);
-      const now = new Date();
-      const from = new Date(now.getTime() - daysDaily * 24 * 60 * 60 * 1000);
+  const loadAllDaily = async () => {
+    const myOp = opId.current;
+    const now = new Date();
+    const from = new Date(now.getTime() - daysDaily * 86400000);
+
+    const tasks = sensors.map(async (s) => {
       const rows = await fetchDaily({
         plant,
-        sensor: sensor as SensorType,
+        sensor: s.type,
         from: from.toISOString(),
         to: now.toISOString(),
       });
-      setDaily(rows);
-    } catch (e: any) {
-      setErr(e.message ?? String(e));
+      return { type: s.type, rows };
+    });
+
+    const arr = await Promise.all(tasks);
+    if (myOp !== opId.current) return;
+
+    const obj: any = {};
+    arr.forEach(({ type, rows }) => {
+      obj[type] = rows;
+    });
+    setDaily(obj);
+  };
+
+  const handleApplyFilters = async () => {
+    if (!plant) return;
+
+    setLoading(true);
+    setErr(null);
+    setMode("historical");
+
+    opId.current++;
+
+    try {
+      await Promise.all([loadAllAgg(), loadAllDaily()]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Botón principal estilo "Aplicar filtros"
-  const handleApplyFilters = async () => {
-    if (!plant || !sensor) return;
-    await Promise.all([loadAgg(), loadDaily()]);
+  const returnToLive = () => {
+    opId.current++;
+    setMode("live");
+    setAgg({});
+    setDaily({});
   };
-
-  const can = Boolean(plant && sensor) && !loading;
 
   const filteredPlants = plants.filter((p) =>
     (p.name || "").toLowerCase().includes(searchTerm.toLowerCase())
@@ -184,20 +231,18 @@ export default function SensorData() {
 
   const currentPlantName =
     plants.find((p) => p._id === plant)?.name || "Sin seleccionar";
-  const currentSensorLabel =
-    (sensor && SENSOR_LABEL[sensor as SensorType]) || "Sin seleccionar";
 
   return (
     <section className="sensor-page">
       <header className="sensor-header">
         <h1 className="sensor-title">Datos de sensores</h1>
         <p className="sensor-subtitle">
-          Mostrando datos de <strong>{currentPlantName}</strong> – sensor{" "}
-          <strong>{currentSensorLabel}</strong>
+          Mostrando datos de <strong>{currentPlantName}</strong> — modo{" "}
+          <strong>{mode === "live" ? "LIVE" : "HISTÓRICO"}</strong>
         </p>
       </header>
 
-      {/* Barra de busqueda tipo tienda */}
+      {/* Búsqueda */}
       <div className="sensor-search-bar">
         <input
           type="text"
@@ -208,7 +253,7 @@ export default function SensorData() {
         />
       </div>
 
-      {/* Filtros principales tipo ecommerce */}
+      {/* Filtros superiores */}
       <div className="sensor-filters-bar">
         <div className="sensor-filter">
           <span className="sensor-filter-label">Planta</span>
@@ -221,25 +266,6 @@ export default function SensorData() {
             {filteredPlants.map((p) => (
               <option key={p._id} value={p._id}>
                 {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="sensor-filter">
-          <span className="sensor-filter-label">Tipo de sensor</span>
-          <select
-            value={sensor}
-            onChange={(e) => setSensor(e.target.value as SensorType)}
-            disabled={!plant}
-            className="sensor-filter-select"
-          >
-            <option value="">
-              {plant ? "Todos los sensores" : "Selecciona una planta"}
-            </option>
-            {sensors.map((s) => (
-              <option key={s._id} value={s.type}>
-                {SENSOR_LABEL[s.type] ?? s.type}
               </option>
             ))}
           </select>
@@ -271,121 +297,122 @@ export default function SensorData() {
           </select>
         </div>
 
-        <div className="sensor-filter-button">
-          <button
-            className="sensor-apply-btn"
-            onClick={handleApplyFilters}
-            disabled={!can}
-          >
-            {loading ? "Cargando..." : "Aplicar filtros"}
+        <button
+          className="sensor-apply-btn"
+          disabled={!plant || loading}
+          onClick={handleApplyFilters}
+        >
+          {loading ? "Cargando..." : "Mostrar Históricos"}
+        </button>
+      </div>
+
+      {/* Botón VOLVER A LIVE */}
+      {mode === "historical" && (
+        <div className="sensor-filter-button" style={{ marginTop: "10px" }}>
+          <button className="sensor-apply-btn" onClick={returnToLive}>
+            Volver a mostrar Live
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Filtros avanzados opcionales (rango fecha) */}
-      <div className="sensor-advanced-filters">
-        <div className="sensor-filter">
-          <span className="sensor-filter-label">Desde</span>
-          <input
-            type="datetime-local"
-            value={fromAgg}
-            onChange={(e) => setFromAgg(e.target.value)}
-            className="sensor-filter-input"
-          />
-        </div>
-        <div className="sensor-filter">
-          <span className="sensor-filter-label">Hasta</span>
-          <input
-            type="datetime-local"
-            value={toAgg}
-            onChange={(e) => setToAgg(e.target.value)}
-            className="sensor-filter-input"
-          />
-        </div>
-      </div>
+      {/* Filtros avanzados */}
+      {mode === "historical" && (
+        <div className="sensor-advanced-filters">
+          <div className="sensor-filter">
+            <span className="sensor-filter-label">Desde</span>
+            <input
+              type="datetime-local"
+              value={fromAgg}
+              onChange={(e) => setFromAgg(e.target.value)}
+              className="sensor-filter-input"
+            />
+          </div>
 
+          <div className="sensor-filter">
+            <span className="sensor-filter-label">Hasta</span>
+            <input
+              type="datetime-local"
+              value={toAgg}
+              onChange={(e) => setToAgg(e.target.value)}
+              className="sensor-filter-input"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
       {err && <p className="error">{err}</p>}
 
-      {/* Resultados */}
       <section className="sensor-results">
-        <h2 className="sensor-results-title">Resultados</h2>
+        <h2 className="sensor-results-title">
+          {mode === "live" ? "Datos en vivo" : "Datos históricos"}
+        </h2>
 
-        {/* Live Chart */}
-        <div className="chart-block">
-          <h3>Últimos 100 valores (live)</h3>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={last100}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="tsLabel" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" name="Valor" dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {sensors.map((s) => {
+          const t = s.type;
 
-        {/* Promedio por intervalo */}
-        {agg.length > 0 && (
-          <div className="chart-block">
-            <h3>Promedio por intervalo ({step})</h3>
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={agg}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="tsISO" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="avg"
-                  name="Promedio"
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+          return (
+            <div key={s._id} className="sensor-block">
+              <h2>{SENSOR_LABEL[t]}</h2>
 
-        {/* Diario min/avg/max */}
-        {daily.length > 0 && (
-          <div className="chart-block">
-            <h3>Resumen diario (min/avg/max)</h3>
-            <ResponsiveContainer width="100%" height={320}>
-              <AreaChart data={daily}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="dayISO" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="min"
-                  name="Min"
-                  fill="#1f6"
-                  stroke="#1f6"
-                  opacity={0.25}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="avg"
-                  name="Avg"
-                  fill="#6cf"
-                  stroke="#6cf"
-                  opacity={0.25}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="max"
-                  name="Max"
-                  fill="#f66"
-                  stroke="#f66"
-                  opacity={0.25}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+              {/* LIVE */}
+              {mode === "live" && (
+                <div className="chart-block">
+                  <h3>Live (últimos 100)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={last100Map[t] || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="tsLabel" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line dataKey="value" stroke="#4af" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* HISTÓRICO */}
+              {mode === "historical" && (
+                <>
+                  {agg[t]?.length > 0 && (
+                    <div className="chart-block">
+                      <h3>Promedio por intervalo</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={agg[t]}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="tsISO" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line dataKey="avg" stroke="#6c6" dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {daily[t]?.length > 0 && (
+                    <div className="chart-block">
+                      <h3>Resumen diario</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={daily[t]}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="dayISO" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Area dataKey="min" fill="#1f6" stroke="#1f6" opacity={0.4} />
+                          <Area dataKey="avg" fill="#6cf" stroke="#6cf" opacity={0.4} />
+                          <Area dataKey="max" fill="#f66" stroke="#f66" opacity={0.4} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
       </section>
     </section>
   );

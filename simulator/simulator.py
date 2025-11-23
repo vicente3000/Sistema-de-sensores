@@ -15,10 +15,28 @@ PLANTS_ENDPOINT = f"{API_URL}/api/v1/plants"
 SENSORS_ENDPOINT = f"{API_URL}/api/v1/sensors"
 READINGS_ENDPOINT = f"{API_URL}/api/v1/readings"
 BATCH_ENDPOINT = f"{API_URL}/api/v1/readings/batch"
-# El contrato dice PUT /sensors/:sensorId/threshold
 
 MAX_RETRIES = 5
-RETRY_BACKOFF = 2  # segundos, multiplicativo
+RETRY_BACKOFF = 2  # segundos
+
+# ---------------------------------------------------------
+# Control dinámico de velocidad
+# ---------------------------------------------------------
+SPEED_FILE = "simulator_speed.json"
+
+def load_speed_config():
+    """Lee el archivo simulator_speed.json en caliente."""
+    try:
+        with open(SPEED_FILE, "r") as f:
+            cfg = json.load(f)
+            return {
+                "delay_ms": cfg.get("delay_ms", 200),
+                "random_jitter_ms": cfg.get("random_jitter_ms", 0)
+            }
+    except FileNotFoundError:
+        return {"delay_ms": 200, "random_jitter_ms": 0}
+    except Exception:
+        return {"delay_ms": 200, "random_jitter_ms": 0}
 
 # ---------------------------------------------------------
 # Generadores de valores realistas
@@ -40,7 +58,7 @@ def generate_value(sensor_type: str) -> float:
 def request_with_retries(method, url, **kwargs):
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            r = requests.request(method, url, timeout=10, **kwargs) # Aumentado a 10s para batches
+            r = requests.request(method, url, timeout=10, **kwargs)
             if r.status_code in (500, 502, 503, 504):
                 raise RequestException(f"Server error {r.status_code}")
             return r
@@ -52,7 +70,7 @@ def request_with_retries(method, url, **kwargs):
     return None
 
 # ---------------------------------------------------------
-# Helpers para crear planta y sensores
+# Plantas y sensores
 # ---------------------------------------------------------
 def get_or_create_plant(name: str, type_: str = "hidroponico") -> str:
     res = request_with_retries("GET", PLANTS_ENDPOINT)
@@ -64,11 +82,9 @@ def get_or_create_plant(name: str, type_: str = "hidroponico") -> str:
 
     payload = {"name": name, "type": type_}
     r = request_with_retries("POST", PLANTS_ENDPOINT, json=payload)
-    if r and r.status_code == 201:
-        plant_id = r.json().get("data", {}).get("_id")
-        print(f"[PLANT CREATED] {name} ({plant_id})")
-        return plant_id
-    raise RuntimeError(f"No se pudo crear planta {name}")
+    plant_id = r.json().get("data", {}).get("_id")
+    print(f"[PLANT CREATED] {name} ({plant_id})")
+    return plant_id
 
 def get_or_create_sensors(plant_id: str):
     default_sensors = [
@@ -79,149 +95,78 @@ def get_or_create_sensors(plant_id: str):
     ]
 
     created_sensors = []
-
-    # Cargar sensores existentes
     res = request_with_retries("GET", f"{PLANTS_ENDPOINT}/{plant_id}/sensors")
     sensors = res.json().get("data", {}).get("items", []) if res else []
     existing_types = [s.get("type") for s in sensors]
 
     for s in default_sensors:
         if s["type"] in existing_types:
-            existing = next(filter(lambda x: x.get("type") == s["type"], sensors))
+            existing = next(x for x in sensors if x["type"] == s["type"])
             created_sensors.append(existing)
             continue
-        
-        # El contrato dice POST /plants/:plantId/sensors
+
         payload = {"type": s["type"], "unit": s["unit"]}
         r = request_with_retries("POST", f"{PLANTS_ENDPOINT}/{plant_id}/sensors", json=payload)
-        sensor = r.json().get("data") if r else None
-        
-        if sensor:
-            created_sensors.append(sensor)
-            print(f"[SENSOR CREATED] {s['type']} ({sensor.get('_id')})")
-            
-            # Crear umbral (Según contrato: PUT /sensors/:sensorId/threshold)
-            threshold_payload = {"min": s["min"], "max": s["max"]}
-            t_r = request_with_retries("PUT", f"{SENSORS_ENDPOINT}/{sensor['_id']}/threshold", json=threshold_payload)
-            
-            if t_r and t_r.status_code in (200, 201):
-                print(f"  -> Threshold creado ({t_r.status_code})")
-            else:
-                print(f"  -> [WARN] No se pudo crear threshold para {s['type']}")
-        else:
-            print(f"[WARN] No se pudo crear sensor {s['type']}")
+        sensor = r.json().get("data")
+        created_sensors.append(sensor)
+
+        threshold_payload = {"min": s["min"], "max": s["max"]}
+        request_with_retries("PUT", f"{SENSORS_ENDPOINT}/{sensor['_id']}/threshold", json=threshold_payload)
 
     return created_sensors
 
 # ---------------------------------------------------------
-# Envío de lecturas
+# Batch sending
 # ---------------------------------------------------------
-def send_reading(plant_id: str, sensor: dict):
-    # (Tu función original... no se usa en el modo batch)
-    pass
-
 def send_batch(plant_id: str, sensors: list, batch_size: int = 50):
     readings = []
-    # Usamos un timestamp base para el lote, con pequeñas variaciones
     base_ts = int(time.time() * 1000)
-    
+
     for _ in range(batch_size):
         for s in sensors:
-            if not s or "_id" not in s:
-                continue
             readings.append({
-                # ==================================================
-                # CORRECCIÓN: De 'plantId' a 'plant' para OpenAPI
-                # ==================================================
                 "plant": plant_id,
                 "sensorId": s["_id"],
                 "sensorType": s["type"],
                 "value": generate_value(s["type"]),
-                # Simulamos que las lecturas no ocurrieron exactamente al mismo ms
-                "ts": base_ts - random.randint(0, 1000) 
+                "ts": base_ts - random.randint(0, 800)
             })
-    
-    if not readings:
-        print("[WARN] No hay lecturas para enviar en batch")
-        return False
 
     payload = {"readings": readings}
-    start_time = time.time()
     r = request_with_retries("POST", BATCH_ENDPOINT, json=payload)
-    end_time = time.time()
 
     if r and r.status_code in (200, 201):
-        print(f"[BATCH OK] {len(readings)} lecturas enviadas en {end_time - start_time:.2f}s (status: {r.status_code})")
         return True
-    else:
-        print(f"[ERROR] Batch fallido (Status: {r.status_code if r else 'N/A'})")
-        return False
+    return False
 
 # ---------------------------------------------------------
-# Ciclo principal (Simulador)
+# Simulador lento / rápido con control dinámico
 # ---------------------------------------------------------
-def run_simulator(plant_name: str, interval_sec: float = 1.0, batch_mode=False):
-    # (Tu función original... no la usaremos para la prueba de carga)
-    pass
+def run_variable_speed_simulator(plant_name: str):
+    print("[SIMULADOR] Iniciando simulador con control dinámico de velocidad...")
+
+    plant_id = get_or_create_plant(plant_name)
+    sensors = get_or_create_sensors(plant_id)
+
+    while True:
+        cfg = load_speed_config()
+        delay = cfg["delay_ms"]
+        jitter = cfg["random_jitter_ms"]
+
+        real_delay = delay + random.randint(0, jitter)
+
+        success = send_batch(plant_id, sensors, batch_size=1)
+
+        if success:
+            print(f"[OK] Lecturas enviadas | delay={real_delay}ms")
+        else:
+            print("[ERROR] Envío fallido")
+
+        time.sleep(real_delay / 1000)
 
 # ---------------------------------------------------------
-# CLI
+# Main
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    # --- MODO SIMULADOR (bucle infinito) ---
-    # Descomenta la siguiente línea si quieres el simulador normal:
-    # run_simulator("Invernadero Central", interval_sec=2, batch_mode=False)
-
-    # --- MODO TEST DE CARGA (10.000 registros y termina) ---
-    print("--- Iniciando Test de Carga (10.000 registros) ---")
-    
-    # 1. Crear planta y sensores
-    try:
-        plant_id = get_or_create_plant("Planta de Carga")
-        sensors = get_or_create_sensors(plant_id)
-    except Exception as e:
-        print(f"[FATAL] Error al crear planta/sensores: {e}. ¿Está la API corriendo?")
-        exit(1)
-
-    if not sensors or len(sensors) < 4:
-        print("[ERROR] No se pudieron crear los 4 sensores. Abortando.")
-        exit(1)
-
-    print(f"\n[INFO] Planta: {plant_id}")
-    print(f"[INFO] Sensores: {[s.get('type') for s in sensors]}")
-    
-    # 2. Enviar 10.000 registros
-    # La función send_batch(batch_size=50) envía (50 iteraciones * 4 sensores) = 200 lecturas.
-    # Para enviar 10.000 lecturas, necesitamos llamarla 50 veces.
-    # (50 llamadas * 200 lecturas/llamada) = 10.000 lecturas
-    
-    total_readings_to_send = 10000
-    # batch_size=50 en la función send_batch
-    readings_per_batch = 50 * len(sensors) 
-    num_batches_needed = total_readings_to_send // readings_per_batch 
-
-    print(f"[INFO] Se enviarán {num_batches_needed} lotes de {readings_per_batch} lecturas cada uno.")
-    start_load_test = time.time()
-    batches_ok = 0
-
-    for i in range(num_batches_needed):
-        print(f"--- Enviando Lote {i+1}/{num_batches_needed} ---")
-        if send_batch(plant_id, sensors, batch_size=50):
-            batches_ok += 1
-        else:
-            print("[ERROR] Lote fallido. Abortando el resto de la prueba.")
-            break
-        
-        # Opcional: un pequeño sleep para no saturar la red,
-        # pero para una prueba de carga real, mantenlo comentado.
-        # time.sleep(0.1) 
-
-    end_load_test = time.time()
-    total_time = end_load_test - start_load_test
-    total_sent = batches_ok * readings_per_batch
-
-    print("\n--- Test de Carga Finalizado ---")
-    print(f"Total enviado: {total_sent} registros")
-    print(f"Tiempo total: {total_time:.2f} segundos")
-    if total_time > 0:
-        print(f"Rendimiento (RPS): {total_sent / total_time:.2f} lecturas/segundo")
+    # Correr simulador con control dinámico
+    run_variable_speed_simulator("Planta de Carga Dinámica")
