@@ -198,9 +198,7 @@ export default function Alerts() {
   const statusLabel = connected ? "Conectado" : "Desconectado";
   const counters = useMemo(
     () => ({
-      red: alerts.filter((a) => a.level === "red").length,
-      orange: alerts.filter((a) => a.level === "orange").length,
-      total: alerts.length,
+      total: alerts.filter((a) => a.status !== "completado").length,
       pendientes: alerts.filter((a) => a.status === "pendiente").length,
       progreso: alerts.filter((a) => a.status === "en_progreso").length,
       completadas: alerts.filter((a) => a.status === "completado").length,
@@ -235,20 +233,15 @@ export default function Alerts() {
       </div>
 
       <p className="alert-meta">
-        Total: <b>{counters.total}</b> ·
-        <span className="badge orange" style={{ marginLeft: 8 }}>
-          Naranja {counters.orange}
-        </span>
-        &nbsp;
-        <span className="badge red">Roja {counters.red}</span> ·
+        Total: <b>{counters.total}</b> -
         <span className="badge alert-status-pend">
           Pendientes {counters.pendientes}
         </span>{" "}
-        ·
+        -
         <span className="badge alert-status-prog">
           En progreso {counters.progreso}
         </span>{" "}
-        ·
+        -
         <span className="badge alert-status-comp">
           Completadas {counters.completadas}
         </span>
@@ -530,3 +523,4 @@ export default function Alerts() {
     </section>
   );
 }
+
