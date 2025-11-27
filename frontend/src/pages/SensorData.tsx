@@ -19,8 +19,8 @@ import { LiveClient, SensorType } from "../lib/RealTime";
 import { Ring, createThrottler } from "../lib/Ring";
 
 const SENSOR_LABEL: Record<SensorType, string> = {
-  "soil-moisture": "Humedad del suelo",
-  temperature: "Temperatura",
+  humidity: "Humedad del suelo",
+  temp: "Temperatura",
   lux: "Luminosidad",
   ph: "pH",
 };
