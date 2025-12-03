@@ -84,7 +84,7 @@
   border: 1px solid #ef444455;
 }
 
-/* nuevos estados de alerta */
+
 .badge.alert-status-pend {
   background: #fbbf2433;
   color: #fbbf24;
@@ -118,7 +118,7 @@ button.btn-sm:hover {
   filter: brightness(0.95);
 }
 
-/* tabla de alertas */
+
 .alert-table {
   width: 100%;
   border-collapse: separate;
@@ -173,7 +173,7 @@ button.btn-sm:hover {
   cursor: not-allowed;
 }
 
-/* agrupación filtros */
+
 .filters-categories {
   border: 1px solid var(--border);
   padding: 12px;
@@ -184,7 +184,7 @@ button.btn-sm:hover {
   min-width: 160px;
 }
 
-/* selector de estado inline */
+
 .status-select {
   padding: 2px 6px;
   border-radius: 8px;
@@ -204,7 +204,7 @@ button.btn-sm:hover {
 .status-completado {
 }
 
-/* Responsive - Alertas */
+
 @media (max-width: 768px) {
   .alerts-toolbar {
     flex-direction: column;

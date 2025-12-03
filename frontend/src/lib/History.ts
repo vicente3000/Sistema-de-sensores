@@ -6,7 +6,7 @@ export type DailyPoint = { dayISO: string; min: number | null; avg: number | nul
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
-// historico crudo (limite)
+
 export async function fetchHistory(params: { plant: string; sensor: SensorType; limit: number; }): Promise<HistoryPoint[]> {
   const url = new URL(`${API_BASE}/api/v1/sensors/history`);
   url.searchParams.set("plant", params.plant);
@@ -16,7 +16,7 @@ export async function fetchHistory(params: { plant: string; sensor: SensorType; 
   const body = await res.json(); return body.data ?? body;
 }
 
-// agregados por paso fijo
+
 export async function fetchAgg(params: { plant: string; sensor: SensorType; step: '1m'|'5m'|'1h'; from?: string; to?: string; }): Promise<AggPoint[]> {
   const url = new URL(`${API_BASE}/api/v1/sensors/history/agg`);
   url.searchParams.set("plant", params.plant);
@@ -28,7 +28,7 @@ export async function fetchAgg(params: { plant: string; sensor: SensorType; step
   const body = await res.json(); return body.data ?? body;
 }
 
-// agregados diarios min/avg/max
+
 export async function fetchDaily(params: { plant: string; sensor: SensorType; from: string; to: string; }): Promise<DailyPoint[]> {
   const url = new URL(`${API_BASE}/api/v1/sensors/daily`);
   url.searchParams.set("plant", params.plant);

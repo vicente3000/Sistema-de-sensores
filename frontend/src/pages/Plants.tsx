@@ -31,7 +31,6 @@ type PlantUI = {
 export default function Plants() {
   const [plants, setPlants] = useState<PlantUI[]>([]);
   const [search, setSearch] = useState("");
-  // formulario crear planta integrado
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("");
   const [creating, setCreating] = useState(false);
@@ -46,7 +45,6 @@ export default function Plants() {
   const [editType, setEditType] = useState("");
   const [msg, setMsg] = useState("");
 
-  // borrador para agregar sensor (solo tipo, umbrales se crean en 0 y se editan abajo)
   const [sensorDraft, setSensorDraft] = useState<{
     type: SensorType;
   }>({ type: "humidity" });
@@ -127,7 +125,7 @@ export default function Plants() {
         )
       );
       setMsg("Planta actualizada");
-      // nos quedamos en la vista de edicion
+
     } catch (e: any) {
       setMsg(`Error: ${e.message ?? String(e)}`);
     }
@@ -140,7 +138,7 @@ export default function Plants() {
   const addSensor = async (plantId: string) => {
     try {
       const s = await createSensor(plantId, { type: sensorDraft.type });
-      // crear umbrales por defecto en 0
+
       await upsertThreshold(s._id, { min: 0, max: 0, hysteresis: 0 });
       setPlants((prev) =>
         prev.map((p) =>
@@ -523,7 +521,7 @@ export default function Plants() {
   );
 }
 
-// Modal global integrado
+
 export function PlantsConfirmModalWrapper() {
   return null;
 }

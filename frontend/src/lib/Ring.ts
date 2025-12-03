@@ -1,4 +1,4 @@
-// src/lib/Ring.ts
+
 export class Ring<T> {
     private buf: T[] = [];
     constructor(private cap: number) {}
@@ -10,7 +10,7 @@ export class Ring<T> {
     clear() { this.buf.length = 0; }
 }
 
-// throttle de render simple (fps máx)
+
 export function createThrottler(ms: number) {
     let blocked = false;
     return (fn: () => void) => {

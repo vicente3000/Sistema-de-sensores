@@ -25,11 +25,11 @@ export default function AddPlant() {
   const [msg, setMsg] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
-  // paso 1
+
   const [name, setName] = useState("");
   const [plantType, setPlantType] = useState<PlantType>("");
 
-  // paso 2
+
   const [sensors, setSensors] = useState<SensorConfig[]>([]);
   const blankSensor: SensorConfig = useMemo(
     () => ({
@@ -48,7 +48,7 @@ export default function AddPlant() {
   );
   const [draft, setDraft] = useState<SensorConfig>(blankSensor);
 
-  // crea planta real y avanza
+
   const handleCreatePlant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -69,7 +69,7 @@ export default function AddPlant() {
     }
   };
 
-  // agrega sensor al borrador local
+
   const addSensor = (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned: SensorConfig = {
@@ -92,7 +92,7 @@ export default function AddPlant() {
   const removeSensor = (id: string) =>
     setSensors((prev) => prev.filter((s) => s.id !== id));
 
-  // crea sensores/umbrales y resetea
+
   const finish = async (withSensors: boolean) => {
     if (!plantId) {
       setMsg("Crea la planta primero");

@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./css/styles.css";
 
-// Aplicar tema inicial lo antes posible
+
 (() => {
   try {
     const saved = localStorage.getItem("theme");

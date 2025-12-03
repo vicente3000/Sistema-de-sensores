@@ -17,14 +17,14 @@
   color: var(--fg);
 }
 
-/* boton volver cuando se esta editando */
+
 
 .back-button {
   margin-top: 16px;
   margin-bottom: 12px;
 }
 
-/* panel de edicion grande */
+
 
 .plant-edit-panel {
   background: var(--card);
@@ -45,7 +45,7 @@
   margin: 0;
 }
 
-/* lista en filas */
+
 
 .plants-list {
   list-style: none;
@@ -87,7 +87,7 @@
   flex-wrap: wrap;
 }
 
-/* botones base (sin colores) */
+
 
 .plant-edit-panel button,
 .plants-list button {
@@ -103,7 +103,7 @@
   opacity: 0.9;
 }
 
-/* variantes de boton */
+
 
 .btn-primary {
   background: var(--accent);
@@ -121,7 +121,7 @@
   color: #fee2e2;
 }
 
-/* texto */
+
 
 .muted {
   color: var(--muted);
@@ -140,7 +140,7 @@
   padding: 2px 10px;
 }
 
-/* grids y subcards del panel de edicion */
+
 
 .grid-2 {
   display: grid;
@@ -176,7 +176,7 @@
   margin-top: 0;
 }
 
-/* acciones dentro de subcards */
+
 
 .actions-row {
   display: flex;
@@ -185,7 +185,7 @@
   flex-wrap: wrap;
 }
 
-/* lista de sensores dentro del panel de edicion */
+
 
 .sensor-list {
   list-style: none;
@@ -207,7 +207,7 @@
   flex-wrap: wrap;
 }
 
-/* fila de controles de umbrales */
+
 
 .sensor-controls {
   display: flex;
@@ -220,15 +220,15 @@
   max-width: 90px;
 }
 
-/* campos en linea para agregar sensor (separacion etiqueta/selector) */
+
 .inline-field {
   display: flex;
   align-items: center;
-  gap: 32px; /* separacion solicitada */
+  gap: 32px;
   font-weight: 500;
 }
 
-/* responsive */
+
 
 @media (max-width: 900px) {
   .edit-grid {

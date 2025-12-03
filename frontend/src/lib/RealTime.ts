@@ -1,4 +1,4 @@
-// src/lib/realtime.ts
+
 import { io, Socket } from "socket.io-client";
 
 export type SensorType = "humidity" | "ph" | "temp" | "lux";
@@ -26,7 +26,7 @@ export class LiveClient {
         this.socket = null;
     }
 
-    // soporta dos estilos de backend: rooms y evento por-canal
+
     subscribe(plantId: string, sensor: SensorType, onPoint: (p: LivePoint) => void): LiveSubscription {
         if (!this.socket) this.connect();
         const s = this.socket!;
@@ -40,11 +40,11 @@ export class LiveClient {
             onPoint(msg);
         };
 
-        // rooms (recomendado)
+
         s.emit("sensor:subscribe", { plantId, sensor });
         s.on(roomEvent, handler);
 
-        // fallback: evento específico por canal
+
         s.on(directEvent, handler);
 
         return {

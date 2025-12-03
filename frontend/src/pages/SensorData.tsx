@@ -40,7 +40,6 @@ export default function SensorData() {
   const [toAgg, setToAgg] = useState("");
   const [daysDaily, setDaysDaily] = useState(30);
 
-  // MODO DE VISUALIZACIÓN: live | historical
   const [mode, setMode] = useState<"live" | "historical">("live");
 
   const opId = useRef(0);
@@ -63,7 +62,7 @@ export default function SensorData() {
 
   const API_URL = "http://localhost:3000/api/v1";
 
-  // Cargar plantas
+
   useEffect(() => {
     const loadPlants = async () => {
       try {
@@ -77,7 +76,7 @@ export default function SensorData() {
     loadPlants();
   }, []);
 
-  // Cargar sensores cuando cambia planta
+
   useEffect(() => {
     if (!plant) {
       setSensors([]);
@@ -96,18 +95,18 @@ export default function SensorData() {
     loadSensors();
   }, [plant]);
 
-  // Conectar socket
+
   useEffect(() => {
     liveRef.current = new LiveClient();
     liveRef.current.connect();
     return () => liveRef.current?.disconnect();
   }, []);
 
-  // Suscripciones LIVE solo si el modo es live
+
   useEffect(() => {
     opId.current++;
 
-    // cancelar subs anteriores
+
     Object.values(unsubRef.current).forEach((u) => u?.unsubscribe());
     unsubRef.current = {};
     ringsRef.current = {};
@@ -152,7 +151,7 @@ export default function SensorData() {
     };
   }, [plant, sensors, mode]);
 
-  // Carga histórica
+
   const loadAllAgg = async () => {
     const myOp = opId.current;
 

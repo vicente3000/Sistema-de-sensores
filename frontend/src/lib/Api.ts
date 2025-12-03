@@ -1,4 +1,4 @@
-// api client simple para UI
+
 export type PlantDoc = {
   _id: string;
   name: string;
@@ -29,9 +29,7 @@ export type AlertDoc = {
 };
 export type AlertStatus = "pendiente" | "en_progreso" | "completado";
 
-// Fallback inteligente: dentro de Docker el hostname correcto suele ser 'api'
-// Si no hay VITE_API_BASE_URL y estamos en localhost (desarrollo fuera de contenedores) usamos localhost,
-// de lo contrario usamos 'http://api:3000'.
+
 const API_BASE =
   (import.meta as any).env?.VITE_API_BASE_URL ||
   (typeof window !== "undefined" && window.location.hostname === "localhost"
@@ -49,7 +47,7 @@ async function http<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   return (body?.data ?? body) as T;
 }
 
-// plantas
+
 export async function listPlants(params?: {
   q?: string;
   limit?: number;
@@ -94,7 +92,7 @@ export async function deletePlant(id: string) {
   return http<{ deleted: true }>(v1(`/plants/${id}`), { method: "DELETE" });
 }
 
-// sensores
+
 export async function listSensors(
   plantId: string,
   params?: { type?: SensorDoc["type"]; limit?: number; offset?: number }
@@ -128,7 +126,7 @@ export async function deleteSensor(sensorId: string) {
   });
 }
 
-// threshold
+
 export async function getThreshold(sensorId: string): Promise<ThresholdDoc> {
   try {
     return await http<ThresholdDoc>(v1(`/sensors/${sensorId}/threshold`));
@@ -149,7 +147,7 @@ export async function upsertThreshold(
   });
 }
 
-// alertas
+
 export async function listAlerts(params?: {
   plantId?: string;
   sensorId?: string;

@@ -60,24 +60,21 @@ export default function Alerts() {
   const [connected, setConnected] = useState(socket.connected);
   const [alerts, setAlerts] = useState<UiAlert[]>([]);
   const [limit, setLimit] = useState(50);
-  // filtros y tabla
   const [fPlant, setFPlant] = useState("");
   const [fSensor, setFSensor] = useState("");
   const [fLevel, setFLevel] = useState("");
   const [fStatus, setFStatus] = useState("");
-  const [fFrom, setFFrom] = useState(""); // datetime-local
+  const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
   const [rows, setRows] = useState<UiAlert[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  // opciones de autocompletado
   const [plantOptions, setPlantOptions] = useState<
     Array<{ id: string; name: string }>
   >([]);
   const [sensorOptions, setSensorOptions] = useState<
     Array<{ id: string; type: SensorType }>
   >([]);
-  // cache de nombres de plantas
   const [plantNames, setPlantNames] = useState<Record<string, string>>({});
 
   function displayPlant(id: string, fallback?: string) {
@@ -100,7 +97,6 @@ export default function Alerts() {
       setPlantNames((prev) => ({ ...prev, ...updates }));
   }
 
-  // cargar plantas para autocompletar
   useEffect(() => {
     (async () => {
       try {
@@ -112,7 +108,7 @@ export default function Alerts() {
     })();
   }, []);
 
-  // cargar sensores al elegir planta
+
   useEffect(() => {
     (async () => {
       if (!fPlant) {
@@ -130,7 +126,7 @@ export default function Alerts() {
     })();
   }, [fPlant]);
 
-  // carga inicial
+
   useEffect(() => {
     (async () => {
       const rows = await listAlerts({ limit: 50 });
@@ -138,9 +134,6 @@ export default function Alerts() {
         id: r._id,
         plantId: r.plantId,
         sensorId: r.sensorId,
-        // ==============================================
-        // CORRECCIÓN 1: Usar r.sensorType
-        // ==============================================
         sensorType: r.sensorType || "humidity",
         value: r.value,
         tsISO: new Date(r.createdAt).toISOString(),
@@ -148,13 +141,12 @@ export default function Alerts() {
         status: r.status || "pendiente",
       }));
       setAlerts(mapped);
-      // pre cargar nombres
       const uniq = Array.from(new Set(mapped.map((m) => m.plantId)));
       ensurePlantNames(uniq);
     })();
   }, []);
 
-  // socket live
+
   useEffect(() => {
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
@@ -181,7 +173,6 @@ export default function Alerts() {
         const next = [ui, ...prev];
         return next.length > limit ? next.slice(0, limit) : next;
       });
-      // fetch nombre si no lo tenemos
       if (!plantNames[msg.plantId] && !msg.plantName)
         ensurePlantNames([msg.plantId]);
     };
@@ -249,7 +240,7 @@ export default function Alerts() {
 
       <div className="alert-list">
         {alerts
-          // Ocultar completadas por defecto; si se desea verlas se usaría la tabla con filtro estado
+          
           .filter((a) => a.status !== "completado")
           .map((a) => (
             <article key={a.id} className={`alert-card alert--${a.level}`}>
@@ -388,9 +379,6 @@ export default function Alerts() {
                 id: r._id,
                 plantId: r.plantId,
                 sensorId: r.sensorId,
-                // ==============================================
-                // CORRECCIÓN 2: Usar r.sensorType
-                // ==============================================
                 sensorType: r.sensorType || "humidity",
                 value: r.value,
                 tsISO: new Date(r.createdAt).toISOString(),
