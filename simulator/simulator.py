@@ -6,9 +6,6 @@ import random
 import requests
 from requests.exceptions import RequestException
 
-# ---------------------------------------------------------
-# Configuración
-# ---------------------------------------------------------
 API_URL = os.getenv("API_URL", "http://localhost:3000")
 
 PLANTS_ENDPOINT = f"{API_URL}/api/v1/plants"
@@ -17,11 +14,8 @@ READINGS_ENDPOINT = f"{API_URL}/api/v1/readings"
 BATCH_ENDPOINT = f"{API_URL}/api/v1/readings/batch"
 
 MAX_RETRIES = 5
-RETRY_BACKOFF = 2  # segundos
+RETRY_BACKOFF = 2  
 
-# ---------------------------------------------------------
-# Control dinámico de velocidad
-# ---------------------------------------------------------
 SPEED_FILE = "simulator_speed.json"
 
 def load_speed_config():
@@ -38,9 +32,6 @@ def load_speed_config():
     except Exception:
         return {"delay_ms": 200, "random_jitter_ms": 0}
 
-# ---------------------------------------------------------
-# Generadores de valores realistas
-# ---------------------------------------------------------
 def generate_value(sensor_type: str) -> float:
     if sensor_type == "humidity":
         return round(random.uniform(20, 80), 2)
@@ -69,9 +60,6 @@ def request_with_retries(method, url, **kwargs):
     print(f"[ERROR] {method.upper()} {url} failed after {MAX_RETRIES} retries")
     return None
 
-# ---------------------------------------------------------
-# Plantas y sensores
-# ---------------------------------------------------------
 def get_or_create_plant(name: str, type_: str = "hidroponico") -> str:
     res = request_with_retries("GET", PLANTS_ENDPOINT)
     plants = res.json().get("data", {}).get("items", []) if res else []
@@ -115,9 +103,6 @@ def get_or_create_sensors(plant_id: str):
 
     return created_sensors
 
-# ---------------------------------------------------------
-# Batch sending
-# ---------------------------------------------------------
 def send_batch(plant_id: str, sensors: list, batch_size: int = 50):
     readings = []
     base_ts = int(time.time() * 1000)
@@ -139,9 +124,6 @@ def send_batch(plant_id: str, sensors: list, batch_size: int = 50):
         return True
     return False
 
-# ---------------------------------------------------------
-# Simulador lento / rápido con control dinámico
-# ---------------------------------------------------------
 def run_variable_speed_simulator(plant_name: str):
     print("[SIMULADOR] Iniciando simulador con control dinámico de velocidad...")
 
@@ -164,9 +146,5 @@ def run_variable_speed_simulator(plant_name: str):
 
         time.sleep(real_delay / 1000)
 
-# ---------------------------------------------------------
-# Main
-# ---------------------------------------------------------
 if __name__ == "__main__":
-    # Correr simulador con control dinámico
     run_variable_speed_simulator("Planta de Carga Dinámica")
